@@ -1,0 +1,37 @@
+{
+  "name": "regoch-websocket",
+  "version": "1.0.0",
+  "title": "Regoch Websocket",
+  "description": "Websocket server made in NodeJS and websocket clients for NodeJS, Browser and other platforms.",
+  "author": "Sasa Mikodanic <smikodanic@gmail.com>",
+  "homepage": "http://www.regoch.org",
+  "license": "MIT",
+  "keywords": [
+    "websocket server",
+    "websocket client",
+    "nodejs",
+    "socket",
+    "ws",
+    "RFC 6455",
+    "real-time",
+    "realtime",
+    "tcp",
+    "regoch"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "inst": "rm -rf node_modules && npm install",
+    "server": "nodemon examples/server/000dev.js",
+    "clientNodejs": "nodemon examples/clientNodejs/000dev.js"
+  },
+  "dependencies": {
+    "regoch-router": "~1.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikodanic/regoch-websocket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smikodanic/regoch-websocket/issues"
+  }
+}
