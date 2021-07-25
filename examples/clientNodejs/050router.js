@@ -1,7 +1,11 @@
 /**
  * The example shows how to implement router
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const helper = require('../../lib/helper');
+
+const Router = require('regoch-router');
+const router = new Router({debug: false});
 
 
 class TestClient extends Client13jsonRWS {
@@ -27,8 +31,7 @@ const main = async () => {
   // IMPORTANT!!! Set the message listener before the question is sent.
   testClient.once('route', (msg, msgSTR, msgBUF) => {
     console.log('msg::', msg);
-    // router transitional variable
-    const router = testClient.router;
+
     const payload = msg.payload; // {uri:string, body?:any}
 
     // router transitional varaible
@@ -56,5 +59,5 @@ const main = async () => {
 };
 
 
-console.log('toooooo');
+
 main().catch(err => console.log(err));

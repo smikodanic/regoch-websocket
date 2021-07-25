@@ -62,16 +62,14 @@ rws.on('connection', async socket => {
 
 
 
-
 /*** message stream ***/
 rws.on('message', (msg, msgSTR, msgBUF, socket) => {
-  // console.log('\nmessage SUBPROTOCOL::', msg); // after subprotocol
-  console.log('\nmessage STRING::', msgSTR); // after DataParser
-  // console.log('\nmessage BUFFER::', msgBUF); // incoming buffer
+  // console.log('\nreceived message SUBPROTOCOL::', msg); // after subprotocol
+  console.log('\nreceived message STRING::', msgSTR); // after DataParser
+  // console.log('\nreceived message BUFFER::', msgBUF); // incoming buffer
   // console.log('\nsocketID', socket.extension.id);
   // rws.dataTransfer.sendOne(msg, socket); // return message back to the sender
 });
-
 
 
 
@@ -98,7 +96,7 @@ rws.on('route', (msgObj, socket, dataTransfer, socketStorage, eventEmitter) => {
     const from = 0;
     const to = trx.msgObj.from;
     const cmd = 'route';
-    const payload = {uri: '/returned/back/21', body: {x: 'something', y:28}};
+    const payload = {uri: '/returned/back/21', body: {x: 'something', y: 28}};
     const msg = {id, from, to, cmd, payload};
     rws.dataTransfer.sendOne(msg, trx.socket);
   }); // send new route back to the client

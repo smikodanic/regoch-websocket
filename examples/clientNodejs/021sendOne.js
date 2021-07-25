@@ -1,7 +1,7 @@
 /**
  * Send to one client.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {
@@ -26,7 +26,7 @@ const main = async () => {
 
 
   console.log('message sent');
-  testClient.sendOne(210519153254226200, 'some message');
+  testClient.sendOne(210725152743550900, 'some message');
 };
 
 

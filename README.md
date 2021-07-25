@@ -1,19 +1,26 @@
 # regoch-websocket
 > Websocket server made in NodeJS and websocket clients for NodeJS, Browser and other platforms.
 
-Small but very powerful library made according to [RFC6455 Standard](https://www.iana.org/assignments/websocket/websocket.xml) for websocket version 13.
+Small but very powerful, websocket library made according to [RFC6455 Standard](https://www.iana.org/assignments/websocket/websocket.xml).
 
-It consists of:
-- Regoch Websocket Server (NodeJS)
-- Regoch Websocket Client (NodeJS)
-- Regoch Websocket Client (Browser)
+Current websocket version: *13*
 
+Library parts:
+- **Regoch Websocket Server (NodeJS)**
+- **Regoch Websocket Client (NodeJS)**
+- **Regoch Websocket Client (Browser)**
+- *Regoch Websocket Client (Angular) - ToDo*
+- *Regoch Websocket Client (React) - ToDo*
+- *Regoch Websocket Client (Vue) - ToDo*
+- *Regoch Websocket Client (JAVA) - ToDo*
+- *Regoch Websocket Client (C++) - ToDo*
 
 
 ## Installation
-```
+```bash
 npm install --save regoch-websocket
 ```
+
 
 ## Website
 [www.regoch.org](http://www.regoch.org/websocket)
@@ -21,25 +28,14 @@ npm install --save regoch-websocket
 
 ## Websocket Server Features
 - websocket version: **13**
-- subprotocol: **[jsonRWS](http://www.regoch.org/websocket-protocol-jsonRWS)**
-- chat in the rooms
+- subprotocols: **[jsonRWS](http://www.regoch.org/websocket-protocol-jsonRWS)**, raw
+- chat,  rooms
+- PING & PONG
 - small file size
-- **only one dependency: "regoch-router"**
+- very fast and reliable data transfer
+- **no npm dependencies**
 - powerful API
 - easy RxJS integration
-
-
-## Development
-```bash
-## Regoch Websocket Server
-npm run server
-
-## Regoch Websocket Client (NodeJS)
-npm run clientNodejs
-
-## Regoch Websocket Client (Browser)
-### open examples/001client.html
-```
 
 
 ## subprotocol "jsonRWS"
@@ -56,7 +52,7 @@ d) The outgoing message is converted from object to string.
 
 
 ## TCPDUMP
-Use *tcpdump* command to debug the messages sent from the server to the client.
+Use *tcpdump* linux command to debug the messages sent from the server to the client.
 For example ```sudo tcpdump -i any port 57190 -X -s0``` where 57190 is the client port i.e. **socket.localPort**
 
 

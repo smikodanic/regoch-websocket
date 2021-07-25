@@ -1,8 +1,9 @@
 /**
- * Pong example.
- * Client receives pong (opcode 0xA) response.
+ * Ping example.
+ * Client is sending ping (opcode 0x9) and the server is responding with pong (opcode 0xA).
  */
-const {Client13jsonRWS, helper} = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const helper = require('../../lib/helper');
 
 
 class TestClient extends Client13jsonRWS {
@@ -21,18 +22,22 @@ const main = async () => {
     reconnectAttempts: 3, // try to reconnect n times
     reconnectDelay: 3000, // delay between reconnections
     subprotocols: ['jsonRWS'],
-    debug: true
+    debug: false
   };
   const testClient = new TestClient(wcOpts);
   await testClient.connect();
 
   await helper.sleep(2000);
+  console.log('Sending pings ...');
 
-  testClient.ping(500);
+  testClient.ping(1000, 5); // send ping 5 times, every 1 second
 
-  testClient.eventEmitter.on('pong', () => {
-    console.log('PONG came');
+  testClient.on('pong', msgSTR => {
+    console.log('received::', msgSTR);
   });
 };
 
 main();
+
+
+

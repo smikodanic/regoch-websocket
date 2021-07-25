@@ -1,8 +1,9 @@
 /**
  * Send to one client several consecutive messages.
+ * Open in another terminal $node 010onMessage.js
  */
-const { Client13jsonRWS, helper } = require('../client');
-
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const helper = require('../../lib/helper');
 
 class TestClient extends Client13jsonRWS {
   constructor(wcOpts) {
@@ -14,7 +15,7 @@ class TestClient extends Client13jsonRWS {
 const main = async () => {
   // connect to websocket server
   const wcOpts = {
-    wsURL: 'ws://localhost:8001?authkey=TRTmrt252',
+    wsURL: 'ws://localhost:3211?authkey=TRTmrt',
     questionTimeout: 3*60*1000, // wait 3secs for answer
     reconnectAttempts: 5, // try to reconnect 5 times
     reconnectDelay: 3000, // delay between reconnections is 3 seconds
@@ -32,13 +33,19 @@ const main = async () => {
     echo_msg: 'Task \"050infinite_run\" is resumed - 25.5.2021 12:51:22',
     time: '2021-05-25T10:51:22.254Z'
   };
-  testClient.sendOne(210525151337366880, 'some message 1');
-  testClient.sendOne(210525151337366880, 'some message 2');
-  testClient.sendOne(210525151337366880, 'some message 3');
-  testClient.route('echo/distribute', body);
-  testClient.sendOne(210525151337366880, 'some message 4');
-  testClient.sendOne(210525151337366880, 'some message 5');
-  testClient.route('echo/distribute', body);
+
+  // NOTICE: Will not work well if await is not used !!!
+  await testClient.sendOne(210725152743550900, 'some message 1');
+  await testClient.sendOne(210725152743550900, body);
+  await testClient.sendOne(210725152743550900, 'some message 3');
+  await testClient.sendOne(210725152743550900, 'some message 4');
+  await testClient.sendOne(210725152743550900, 'some message 5');
+
+  await testClient.sendOne(210725152743550900, 'some message 6');
+  await testClient.sendOne(210725152743550900, 'some message 7');
+  await testClient.sendOne(210725152743550900, 'some message 8');
+  await testClient.sendOne(210725152743550900, 'some message 9');
+  await testClient.sendOne(210725152743550900, 'some message 10');
 
   console.log('Messages sent');
 

@@ -1,7 +1,8 @@
 /**
- * Connect and disconnect example.
+ * Connect and disconnect after delay example.
  */
-const {Client13jsonRWS, helper} = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const helper = require('../../lib/helper');
 
 
 class TestClient extends Client13jsonRWS {

@@ -42,18 +42,24 @@ class DataTransfer {
         let msgBUF = Buffer.concat(msgBUFarr);
         let msgSTR = this.dataParser.incoming(msgBUF); // convert incoming buffer message to string
 
-        const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
-        if (!delimiter_reg.test(msgSTR)) { return; }
-
         let msg;
         if (/OPCODE 0x/.test(msgSTR)) {
           this.opcodes(msgSTR, socket);
         } else {
+          /**
+           * Test if the message contains the delimiter.
+           * Delimiter is important because the network is splitting large message in the chunks of data so we need to know when the message reached the end and new message is starting.
+           * A TCP network chunk is around 1500 bytes. To check it use linux command: $ ifconfig | grep -i MTU
+           * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
+           */
+          const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
+          if (!delimiter_reg.test(msgSTR)) { return; }
+
           msg = this.subprotocolLib.incoming(msgSTR); // convert the string message to format defined by the subprotocol
           this.subprotocolLib.process(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
         }
 
-        // stream the message
+        // emit the message
         this.eventEmitter.emit('message', msg, msgSTR, msgBUF, socket);
 
         // reset
@@ -196,7 +202,7 @@ class DataTransfer {
    * @param {Socket} socket - client which is receiving message (net socket https://nodejs.org/api/net.html#net_class_net_socket)
    * @returns {void}
    */
-  sendError(err, socket) {
+  async sendError(err, socket) {
     const to = !!socket.extension ? socket.extension.id : 0;
     const msgObj = {
       id: helper.generateID(),
@@ -205,7 +211,7 @@ class DataTransfer {
       cmd: 'error',
       payload: err.message
     };
-    this.carryOut(msgObj, socket);
+    await this.carryOut(msgObj, socket);
   }
 
 
@@ -215,7 +221,7 @@ class DataTransfer {
    * @param {Socket} socket - client which is receiving message (net socket https://nodejs.org/api/net.html#net_class_net_socket)
    * @returns {void}
    */
-  sendID(socket) {
+  async sendID(socket) {
     const msgObj = {
       id: helper.generateID(),
       from: 0,
@@ -223,9 +229,8 @@ class DataTransfer {
       cmd: 'info/socket/id',
       payload: socket.extension.id
     };
-    this.carryOut(msgObj, socket);
+    await this.carryOut(msgObj, socket);
   }
-
 
 
 

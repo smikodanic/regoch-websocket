@@ -2,7 +2,7 @@
  * The example shows how to activate reconnection after the connection is closed.
  * To test this script first turn off the server and then turn it on. The client should reconnect automatically when server is turned on.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {

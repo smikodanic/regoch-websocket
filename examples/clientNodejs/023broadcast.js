@@ -2,7 +2,7 @@
  * Send message (payload) to all clients except the sender.
  * Open clients in other two terminals.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {

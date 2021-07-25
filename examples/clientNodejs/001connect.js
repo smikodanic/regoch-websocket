@@ -1,7 +1,7 @@
 /**
  * Connect example.
  */
-const {Client13jsonRWS, helper} = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {
@@ -9,7 +9,6 @@ class TestClient extends Client13jsonRWS {
     super(wcOpts);
   }
 }
-
 
 
 const main = async () => {
@@ -24,11 +23,13 @@ const main = async () => {
   };
   const testClient = new TestClient(wcOpts);
   const socket = await testClient.connect();
+
   console.log('---SOCKET---');
   console.log('readyState::', socket.readyState);
   console.log('writable::', socket.writable);
   console.log('readable::', socket.readable);
 
+  testClient.on('closed-by-server', msgSTR => { console.log('received::', msgSTR); });
 };
 
 main();

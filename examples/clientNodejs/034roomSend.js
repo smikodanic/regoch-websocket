@@ -2,7 +2,7 @@
  * Enter one room.
  * Open 031roomEnter.js in other terminals to test this script.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {

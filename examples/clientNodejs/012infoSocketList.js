@@ -1,7 +1,7 @@
 /**
  * Send question to list the server sockets.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {
@@ -27,7 +27,7 @@ const main = async () => {
 
   // IMPORTANT!!! Set the message listener before the question is sent.
   testClient.on('message', (msg, msgSTR, msgBUF) => {
-    console.log('STRING message', msgSTR);
+    console.log('STRING message::', msgSTR);
   });
 
 

@@ -1,7 +1,7 @@
 /**
  * Set socket nick name.
  */
-const { Client13jsonRWS } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {

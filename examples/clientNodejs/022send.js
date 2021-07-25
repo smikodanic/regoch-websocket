@@ -2,7 +2,7 @@
  * Send to one or many clients.
  * Open clients in other two terminals.
  */
-const { Client13jsonRWS, helper } = require('../client');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
 
 
 class TestClient extends Client13jsonRWS {
@@ -26,8 +26,8 @@ const main = async () => {
   await testClient.connect();
 
 
-  console.log('message sent');
-  testClient.send([210217103629571780, 210217103856975330], 'Some message to multiple clients');
+  console.log('Message sent to multiple clients.');
+  testClient.send([210725152743550900, 210725153202769120], 'Some message to multiple clients');
 };
 
 

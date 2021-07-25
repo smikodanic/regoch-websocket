@@ -1,7 +1,8 @@
 /**
  * Test and develop here !
  */
-const Client13jsonRWS = require('../client/Client13jsonRWS');
+const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const { helper } = require('../../lib');
 
 
 class TestClient extends Client13jsonRWS {
@@ -11,7 +12,7 @@ class TestClient extends Client13jsonRWS {
   }
 
 
-  sendMsg() {
+  async sendMsg() {
     /* A) test raw string messages (tests for DataParser.js ) */
     const msg1 = 'A'; // 1 byte
     const msg2 = 'Š'; // 2 bytes
@@ -53,9 +54,9 @@ class TestClient extends Client13jsonRWS {
 
 
     /* how many bytes in the message string (for example A is 1 byte and Č is 2 bytes, so msg.length will not give exact result)*/
-    console.log(`\nSent(${this.getMessageSize(msg)}): ${msg}`);
+    console.log(`\nSent(${helper.getMessageSize(msg)} bytes): ${msg}`);
 
-    this.sendRaw(msg);
+    await this.sendAll(msg);
   }
 
 
@@ -76,11 +77,12 @@ const testClient = new TestClient(wcOpts);
 testClient.connect();
 
 
+testClient.on('message', (msg, msgSTR, msgBUF) => {
+  console.log(`Received(${helper.getMessageSize(msg)} bytes): ${msg}`);
+});
 
-
-
-setTimeout(() => {
-  // testClient.sendMsg();
-  // testClient.infoSocketId();
-}, 1300);
+setTimeout(async () => {
+  await testClient.sendMsg();
+  // await testClient.infoSocketId();
+}, 2100);
 

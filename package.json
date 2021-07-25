@@ -20,13 +20,9 @@
   ],
   "main": "index.js",
   "scripts": {
-    "inst": "rm -rf node_modules && npm install",
-    "server": "nodemon examples/server/000dev.js",
-    "clientNodejs": "nodemon examples/clientNodejs/000dev.js"
+    "inst": "rm -rf node_modules && npm install"
   },
-  "dependencies": {
-    "regoch-router": "~1.0.3"
-  },
+  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/smikodanic/regoch-websocket.git"
