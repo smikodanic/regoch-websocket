@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <title>001client - browser</title>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="../dist/client13jsonRWS/client13jsonRWS.js"></script>
+    <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
+    <script src="../../../regoch-router/Router.js"></script>
     <script src="001client.js"></script>
     <style>
       * {
@@ -29,15 +30,15 @@
   </head>
   <body>
     <h1>WebSocket Example</h1>
-    <p>To make this client works properly start the <a href="https://github.com/smikodanic/regoch-websocket-server" target="_blank">Regoch Websocket Server</a>.
-    Open your browser's developer tools to see the activity.</p>
+    <p>To make this client works properly start the <a href="https://github.com/smikodanic/regoch-websocket" target="_blank">Regoch Websocket Server</a>.
+    Open your browser's Developer Tools &raquo; Console.</p>
 
     <h3>Connection Test</h3>
     <button onclick="testCB.connectMe()">Connect</button>
     <button onclick="testCB.disconnect()">Disconnect</button>
 
 
-
+    <br><br>
     <h3>Message Properties</h3>
     <p>{id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}</p>
 
@@ -55,6 +56,7 @@
     <br><input type="string" id="to2" placeholder="to (separate IDs with comma)"><input type="text" id="payload2" placeholder="payload (message)"><button onclick="testCB.send_test()">send many</button>
     <br><input type="text" id="payload3" placeholder="payload (message)"><button onclick="testCB.broadcast_test()">broadcast</button> - send to all but not the sender
     <br><input type="text" id="payload4" placeholder="payload (message)"><button onclick="testCB.sendAll_test()">send all</button> - send to all clients
+    <br><input type="number" id="to5" placeholder="to"><button onclick="testCB.sendOne_consecutive_test()">send 100 times</button> - send same message consecutive 100x to one receiver
 
 
     <br><br>

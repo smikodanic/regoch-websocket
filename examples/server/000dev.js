@@ -90,7 +90,7 @@ rws.on('route', (msgObj, socket, dataTransfer, socketStorage, eventEmitter) => {
 
   // route definitions
   router.def('/shop/login', (trx) => { console.log('trx::', trx.uri); });
-  router.def('/shop/product/:id', (trx) => { console.log('trx::', trx.uri); });
+  router.def('/shop/product/:id', (trx) => { console.log('trx.uri::', trx.uri, '\ntrx.query::', trx.query, '\ntrx.params::', trx.params); });
   router.def('/send/me/back', (trx) => {
     const id = trx.msgObj.id;
     const from = 0;

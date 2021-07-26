@@ -1,4 +1,4 @@
-class TestClient extends window.regoch.Client13jsonRWS {
+class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
   constructor(wcOpts) {
     super(wcOpts);
@@ -58,28 +58,39 @@ class TestClient extends window.regoch.Client13jsonRWS {
 
 
   /*** Send Tests */
-  sendOne_test() {
+  async sendOne_test() {
     const to = +document.getElementById('to1').value;
     const payload = document.getElementById('payload1').value;
-    this.sendOne(to, payload);
+    await this.sendOne(to, payload);
   }
 
-  send_test() {
+  async send_test() {
     const tos = document.getElementById('to2').value; // string 210205081923171300, 210205082042463230
     const to = tos.split(',').map(to => +to); // array of numbers [210205081923171300, 210205082042463230]
     const payload = document.getElementById('payload2').value;
-    this.send(to, payload);
+    await this.send(to, payload);
   }
 
-  broadcast_test() {
+  async broadcast_test() {
     const payload = document.getElementById('payload3').value;
-    this.broadcast(payload);
+    await this.broadcast(payload);
   }
 
-  sendAll_test() {
+  async sendAll_test() {
     const payload = document.getElementById('payload4').value;
-    this.sendAll(payload);
+    await this.sendAll(payload);
   }
+
+  // async/await must be used in the consecutive sending
+  async sendOne_consecutive_test() {
+    const to = +document.getElementById('to5').value;
+    for (let i = 1; i <= 100; i++) {
+      const payload = `${i}. consecutive message`;
+      await this.sendOne(to, payload);
+    }
+  }
+
+
 
 
 
@@ -136,11 +147,10 @@ class TestClient extends window.regoch.Client13jsonRWS {
     // receive route
     this.once('route', (msg, msgSTR) => {
       console.log('route msg::', msg);
-      // router transitional variable
-      const router = this.router;
-      const payload = msg.payload; // {uri:string, body?:any}
 
-      // router transitional varaible
+      // regoch-router transitional varaible trx
+      const router = new window.regochRouter({debug: false});
+      const payload = msg.payload; // {uri:string, body?:any}
       router.trx = {
         uri: payload.uri,
         body: payload.body,

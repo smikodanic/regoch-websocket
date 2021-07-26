@@ -422,6 +422,9 @@ class Client13jsonRWS extends DataParser {
   /************* SEND MESSAGE TO OTHER CLIENTS ************/
   /**
    * Send message to the websocket server after the message is processed by subprotocol and DataParser.
+   * @param {number|number[]} to - final destination: 210201164339351900
+   * @param {string} cmd - command
+   * @param {any} payload - message payload
    * @returns {void}
    */
   async carryOut(to, cmd, payload) {
