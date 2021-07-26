@@ -217,7 +217,7 @@ class Client13jsonRWS {
 
     // the message must be defined and client must be connected to the server
     if (!!msg && !!this.wsocket && this.wsocket.readyState === 1) {
-      await new Promise(r => setTimeout(r, 10));
+      await new Promise(r => setTimeout(r, 0));
       await this.wsocket.send(msg);
     } else {
       throw new Error('The message is not defined or the client is disconnected.');

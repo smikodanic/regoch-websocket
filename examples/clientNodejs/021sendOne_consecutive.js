@@ -34,20 +34,14 @@ const main = async () => {
     time: '2021-05-25T10:51:22.254Z'
   };
 
-  // NOTICE: Will not work well if await is not used !!!
-  await testClient.sendOne(210725152743550900, 'some message 1');
-  await testClient.sendOne(210725152743550900, body);
-  await testClient.sendOne(210725152743550900, 'some message 3');
-  await testClient.sendOne(210725152743550900, 'some message 4');
-  await testClient.sendOne(210725152743550900, 'some message 5');
 
-  await testClient.sendOne(210725152743550900, 'some message 6');
-  await testClient.sendOne(210725152743550900, 'some message 7');
-  await testClient.sendOne(210725152743550900, 'some message 8');
-  await testClient.sendOne(210725152743550900, 'some message 9');
-  await testClient.sendOne(210725152743550900, 'some message 10');
+  for (let i = 1; i <= 100; i++) {
+    const payload = `${i}. consecutive message`;
+    await testClient.sendOne(210725152743550900, payload); // NOTICE: Will not work well if await is not used !!!
+  }
 
-  console.log('Messages sent');
+
+  console.log('A 100 messages sent');
 
   await helper.sleep(1000);
   process.exit();
