@@ -2,10 +2,10 @@
  * Send message (payload) to all clients included to the sender.
  * Open clients in other two terminals.
  */
-const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const { RWClientNodejs } = require('../../index.js');
 
 
-class TestClient extends Client13jsonRWS {
+class TestClient extends RWClientNodejs {
   constructor(wcOpts) {
     super(wcOpts);
   }

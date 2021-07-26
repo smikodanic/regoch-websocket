@@ -178,7 +178,6 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
     });
   }
 
-
 }
 
 

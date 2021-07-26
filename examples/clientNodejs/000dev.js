@@ -1,11 +1,10 @@
 /**
  * Test and develop here !
  */
-const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
-const { getMessageSize } = require('../../lib');
+const { RWClientNodejs, lib } = require('../../index.js');
 
 
-class TestClient extends Client13jsonRWS {
+class TestClient extends RWClientNodejs {
 
   constructor(wcOpts) {
     super(wcOpts);
@@ -54,7 +53,7 @@ class TestClient extends Client13jsonRWS {
 
 
     /* how many bytes in the message string (for example A is 1 byte and Č is 2 bytes, so msg.length will not give exact result)*/
-    console.log(`\nSent(${getMessageSize(msg)} bytes): ${msg}`);
+    console.log(`\nSent(${lib.getMessageSize(msg)} bytes): ${msg}`);
 
     await this.sendAll(msg);
   }
@@ -78,7 +77,7 @@ testClient.connect();
 
 
 testClient.on('message', (msg, msgSTR, msgBUF) => {
-  console.log(`Received(${getMessageSize(msg)} bytes): ${msg}`);
+  console.log(`Received(${lib.getMessageSize(msg)} bytes): ${msg}`);
 });
 
 setTimeout(async () => {

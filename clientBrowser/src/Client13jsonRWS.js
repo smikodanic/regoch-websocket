@@ -408,5 +408,14 @@ class Client13jsonRWS {
 }
 
 
-window.regochWebsocket = { Client13jsonRWS };
-module.exports = Client13jsonRWS;
+
+
+// NodeJS
+if (typeof module !== 'undefined') {
+  module.exports = Client13jsonRWS;
+}
+
+// Browser
+if (typeof window !== 'undefined') {
+  window.regochWebsocket = { Client13jsonRWS };
+}

@@ -6,7 +6,7 @@ const http = require('http');
  * - port:number - HTTP Server port number
  * - timeout:number - ms of inactivity after ws will be closed. If 0 then the ws will never close. Default is 5 minutes.
  */
-class RWSHttpServer {
+class RWHttpServer {
 
   constructor(httpOpts) {
 
@@ -135,4 +135,4 @@ class RWSHttpServer {
 
 
 
-module.exports = RWSHttpServer;
+module.exports = RWHttpServer;

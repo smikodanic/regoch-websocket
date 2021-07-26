@@ -1,7 +1,9 @@
 /**
  * An example with the built-in HTTP server.
  */
-const { RWS, RWSHttpServer, Router, helper } = require('../../server/index.js');
+const { RWServer, RWHttpServer } = require('../../index.js');
+
+const Router = require('regoch-router');
 const router = new Router({debug: false});
 
 
@@ -10,7 +12,7 @@ const httpOpts = {
   port: 3211,
   timeout: 0 // if 0 the socket connection will never timeout
 };
-const rwsHttpServer = new RWSHttpServer(httpOpts);
+const rwsHttpServer = new RWHttpServer(httpOpts);
 const httpServer = rwsHttpServer.start(); // nodeJS HTTP server instance
 setTimeout(() => {
   // rwsHttpServer.restart();
@@ -30,7 +32,7 @@ const wsOpts = {
   version: 13,
   debug: false
 };
-const rws = new RWS(wsOpts);
+const rws = new RWServer(wsOpts);
 rws.socketStorage.init(null);
 rws.bootup(httpServer);
 

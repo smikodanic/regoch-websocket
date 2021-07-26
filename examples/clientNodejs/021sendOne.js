@@ -1,10 +1,10 @@
 /**
  * Send to one client.
  */
-const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
+const { RWClientNodejs } = require('../../index.js');
 
 
-class TestClient extends Client13jsonRWS {
+class TestClient extends RWClientNodejs {
   constructor(wcOpts) {
     super(wcOpts);
   }
@@ -26,7 +26,7 @@ const main = async () => {
 
 
   console.log('message sent');
-  testClient.sendOne(210725152743550900, 'some message');
+  testClient.sendOne(210726155519554340, 'some message');
 };
 
 

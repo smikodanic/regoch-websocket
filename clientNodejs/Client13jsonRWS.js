@@ -34,6 +34,7 @@ class Client13jsonRWS extends DataParser {
     this.wsKey; // the value of 'Sec-Websocket-Key' header
     this.clientRequest; // client HTTP request https://nodejs.org/api/http.html#http_class_http_clientrequest
     this.onProcessEvents();
+    this.i = 0;
   }
 
 
@@ -438,7 +439,8 @@ class Client13jsonRWS extends DataParser {
     if (!!msg) {
       const msgBUF = this.outgoing(msg, 1);
       await new Promise(r => setTimeout(r, 100));
-      await this.socketWrite(msgBUF);
+      const resp = await this.socketWrite(msgBUF);
+      console.log(resp);
     } else {
       throw new Error('The message is not defined.');
     }
@@ -453,12 +455,12 @@ class Client13jsonRWS extends DataParser {
    */
   async socketWrite(msgBUF) {
     if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
-      await new Promise(resolve => {
-        this.socket.write(msgBUF, () => { resolve(); });
-      });
+      const resp = this.socket.write(msgBUF);
+      return resp; // true|false
     } else {
       this.debugger('Socket is not writeble or doesn\'t exist');
     }
+    this.i++;
   }
 
 

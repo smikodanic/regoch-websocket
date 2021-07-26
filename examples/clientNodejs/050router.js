@@ -1,14 +1,14 @@
 /**
  * The example shows how to implement router
  */
-const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
-const helper = require('../../lib/helper');
+const { RWClientNodejs, lib } = require('../../index.js');
+const helper = lib.helper;
 
 const Router = require('regoch-router');
 const router = new Router({debug: false});
 
 
-class TestClient extends Client13jsonRWS {
+class TestClient extends RWClientNodejs {
   constructor(wcOpts) {
     super(wcOpts);
   }

@@ -58,9 +58,13 @@ npm run dev   # This command will watch for file "Client13jsonRWS.js" changes an
 
 
 
-## How to use
-It's very simpe. Just extend your JS class with the *window.regoch.Client13jsonRWS*.
+## How to use in pure Javascript ?
+It's very simple. Include *client13jsonRWS-min.js* in your HTML file
+```html
+<script src="node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS/client13jsonRWS-min.js"></script>
+```
 
+and extend your JS class with the *window.regochWebsocket.Client13jsonRWS*.
 ```javascript
 class TestClient extends window.regochWebsocket.Client13jsonRWS {
   constructor(wcOpts) {
@@ -81,34 +85,31 @@ const testCB = new TestClient(wcOpts);
 ```
 
 
-## Browserify
+## How to use in Browserify ?
 If your frontend project is created by the Browserify you can include the client with:
 ```javascript
-const { clientBrowser } = require('regoch-websocket);
+const { RWClientBrowser } = require('regoch-websocket);
+
+class TestClient extends RWClientBrowser {
+  constructor(wcOpts) {
+    super(wcOpts);
+  }
+}
+
+const wcOpts = {
+  wsURL: 'ws://localhost:3211?authkey=TRTmrt',
+  questionTimeout: 3*1000, // wait 3secs for answer
+  reconnectAttempts: 5, // try to reconnect 5 times
+  reconnectDelay: 3000, // delay between reconnections is 3 seconds
+  subprotocols: ['jsonRWS'],
+  debug: false
+};
+
+const testCB = new TestClient(wcOpts);
 ```
 
-
-
-
+then in your HTML use:
 ```html
 <button onclick="testCB.connect()">Connect</button>
 <button onclick="testCB.disconnect()">Disconnect</button>
 ```
-
-
-## subprotocol "jsonRWS"
-*Subprotocol description:*
-The subprotocol is created for communication between websocket server and client.
-
-*Subprotocol definitons:*
-a) Client have to send message in valid JSON format. Fields: **{id:number, from:number, tonumber|string|number[], cmd:string, payload?:any}**
-b) Server have to send message in valid JSON format. Fields: **{id:number, from:number, tonumber|string|number[], cmd:string, payload?:any}**
-c) The incoming message is converted from string to object.
-d) The outgoing message is converted from object to string.
-
-
-
-### Licence
-“Freely you received, freely you give”, Matthew 10:5-8
-
-Copyright (c) 2020 Saša Mikodanić licensed under [MIT](./LICENSE) .

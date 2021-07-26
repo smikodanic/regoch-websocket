@@ -2,7 +2,7 @@
  * An example with the external HTTP server injected into the .
  */
 const http = require('http');
-const { RWS } = require('../../server/index.js');
+const { RWServer } = require('../../index.js');
 
 
 // create external HTTP server instance
@@ -53,7 +53,7 @@ const wsOpts = {
   version: 13,
   debug: false
 };
-const rws = new RWS(wsOpts);
+const rws = new RWServer(wsOpts);
 rws.socketStorage.init(null);
 rws.bootup(httpServer);
 

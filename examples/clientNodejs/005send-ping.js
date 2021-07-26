@@ -2,11 +2,11 @@
  * Ping example.
  * Client is sending ping (opcode 0x9) and the server is responding with pong (opcode 0xA).
  */
-const Client13jsonRWS = require('../../clientNodejs/Client13jsonRWS');
-const helper = require('../../lib/helper');
+const { RWClientNodejs, lib } = require('../../index.js');
+const helper = lib.helper;
 
 
-class TestClient extends Client13jsonRWS {
+class TestClient extends RWClientNodejs {
   constructor(wcOpts) {
     super(wcOpts);
   }
@@ -28,7 +28,7 @@ const main = async () => {
   await testClient.connect();
 
   await helper.sleep(2000);
-  console.log('Sending pings ...');
+  console.log('Sending pings every 1 second...');
 
   testClient.ping(1000, 5); // send ping 5 times, every 1 second
 

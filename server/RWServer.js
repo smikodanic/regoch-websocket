@@ -8,7 +8,7 @@ new StringExt();
 
 
 
-class RWS {
+class RWServer {
 
   /**
    * @param {object} wsOpts - websocket options
@@ -196,4 +196,4 @@ class RWS {
 
 
 
-module.exports = RWS;
+module.exports = RWServer;
