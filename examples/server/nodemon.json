@@ -10,7 +10,8 @@
   },
   "watch": [
     "000dev.js",
-    "../../server/*"
+    "../../server/*",
+    "../../lib/*"
   ],
   "env": {
     "NODE_ENV": "development"
