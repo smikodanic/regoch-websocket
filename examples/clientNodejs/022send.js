@@ -27,7 +27,7 @@ const main = async () => {
 
 
   console.log('Message sent to multiple clients.');
-  testClient.send([210725152743550900, 210725153202769120], 'Some message to multiple clients');
+  await testClient.send([210725152743550900, 210725153202769120], 'Some message to multiple clients');
 };
 
 

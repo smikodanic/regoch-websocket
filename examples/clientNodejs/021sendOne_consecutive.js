@@ -1,4 +1,5 @@
 /**
+ * $node 021sendOne_consecutive.js 210727090438377820
  * Send to one client several consecutive messages.
  * Open in another terminal $node 010onMessage.js
  */
@@ -24,16 +25,18 @@ const main = async () => {
   };
   const testClient = new TestClient(wcOpts);
   const socket = await testClient.connect();
+  const to = +process.argv[2];
 
   for (let i = 1; i <= 100; i++) {
     const payload = `${i}. consecutive message`;
     console.log(payload);
-    await testClient.sendOne(210726163624219170, payload); // NOTICE: Will not work well if await is not used !!!
+
+    await testClient.sendOne(to, payload); // NOTICE: Will not work well if await is not used !!!
   }
 
 
-  await helper.sleep(5500);
   console.log('A 100 messages sent');
+  await helper.sleep(8000);
   process.exit();
 };
 

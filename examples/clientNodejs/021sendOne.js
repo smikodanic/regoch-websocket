@@ -26,7 +26,7 @@ const main = async () => {
 
 
   console.log('message sent');
-  testClient.sendOne(210726155519554340, 'some message');
+  await testClient.sendOne(210726155519554340, 'some message');
 };
 
 

@@ -28,13 +28,13 @@ class Client13jsonRWS extends DataParser {
     this.attempt = 1; // reconnect attempt counter
     this.resHeaders; // onUpgrade response headers
     this.subprotocolLib;
+    this.wsKey; // the value of 'Sec-Websocket-Key' header
+    this.clientRequest; // client HTTP request https://nodejs.org/api/http.html#http_class_http_clientrequest
+
     this.eventEmitter = new EventEmitter();
     this.eventEmitter.setMaxListeners(8);
 
-    this.wsKey; // the value of 'Sec-Websocket-Key' header
-    this.clientRequest; // client HTTP request https://nodejs.org/api/http.html#http_class_http_clientrequest
     this.onProcessEvents();
-    this.i = 0;
   }
 
 
@@ -47,7 +47,7 @@ class Client13jsonRWS extends DataParser {
   connect() {
     // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
     const wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
-    const httpURL = wsURL.replace('ws://', 'http://');
+    const httpURL = wsURL.replace('wss://', 'https://').replace('ws://', 'http://');
     const urlObj  = new urlNode.URL(httpURL);
     const hostname = urlObj.hostname;
     const port = urlObj.port;
@@ -348,9 +348,9 @@ class Client13jsonRWS extends DataParser {
   /**
    * When PING is received from the server send PONG back.
    */
-  pong() {
+  async pong() {
     const pongBUF = this.ctrlPong();
-    this.socketWrite(pongBUF);
+    await this.socketWrite(pongBUF);
   }
 
 
@@ -432,17 +432,15 @@ class Client13jsonRWS extends DataParser {
     const id = helper.generateID(); // the message ID
     const from = +this.socketID; // the sender ID
     if (!to) { to = 0; } // server ID is 0
-    const msgObj = {id, from, to, cmd, payload};
-    const msg = jsonRWS.outgoing(msgObj);
+    const msg = {id, from, to, cmd, payload};
+    const msgSTR = jsonRWS.outgoing(msg);
 
     // the message must be defined and client must be connected to the server
-    if (!!msg) {
-      const msgBUF = this.outgoing(msg, 1);
-      await new Promise(r => setTimeout(r, 100));
-      const resp = await this.socketWrite(msgBUF);
-      console.log(resp);
+    if (!!msgSTR) {
+      const msgBUF = this.outgoing(msgSTR, 1);
+      await this.socketWrite(msgBUF);
     } else {
-      throw new Error('The message is not defined.');
+      this.debugger('The message is not defined.');
     }
   }
 
@@ -451,17 +449,17 @@ class Client13jsonRWS extends DataParser {
    * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
    * and send message in buffer format.
    * @param {Buffer} msgBUF - message to server
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async socketWrite(msgBUF) {
+    await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
     if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
-      const resp = this.socket.write(msgBUF);
-      return resp; // true|false
+      this.socket.write(msgBUF);
     } else {
       this.debugger('Socket is not writeble or doesn\'t exist');
     }
-    this.i++;
   }
+
 
 
   /**

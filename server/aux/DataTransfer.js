@@ -36,6 +36,8 @@ class DataTransfer {
     let msgBUFarr = [];
 
     socket.on('data', async msgBUFchunk => {
+      await new Promise(r => setTimeout(r, )); // slow down very fast incoming data streams
+
       try {
         // console.log('msgBUFchunk::', msgBUFchunk.length, msgBUFchunk.toString('hex').match(/../g).join(' '));
         msgBUFarr.push(msgBUFchunk);
@@ -56,6 +58,7 @@ class DataTransfer {
           if (!delimiter_reg.test(msgSTR)) { return; }
 
           msg = this.subprotocolLib.incoming(msgSTR); // convert the string message to format defined by the subprotocol
+          console.log(Date.now(), msg.payload);
           this.subprotocolLib.process(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
         }
 
@@ -76,6 +79,7 @@ class DataTransfer {
         // socket.destroy(); // disconnect client which sent bad message
       }
     });
+
   }
 
 
@@ -109,13 +113,13 @@ class DataTransfer {
    * @param {Socket} socket - client which is receiving message (net socket https://nodejs.org/api/net.html#net_class_net_socket)
    * @returns {void}
    */
-  carryOut(msg, socket) {
+  async carryOut(msg, socket) {
     try {
       const msgSTR = this.subprotocolLib.outgoing(msg); // convert outgoing message to string
       const msgBUF = this.dataParser.outgoing(msgSTR, 0); // convert string to buffer
       if (!!socket && socket.readable) { socket.write(msgBUF); } // send buffer message to the client
       else { throw new Error(`Socket is not defined or not writable ! msg: ${msgSTR}`); }
-
+      await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
     } catch(err) {
       const socketID = !!socket && !!socket.extension ? socket.extension.id : 'BAD SOCKET';
       console.log(`DataTransfer.carryOut:: socketID: ${socketID}, WARNING: ${err.message}`.cliBoja('yellow'));
@@ -131,7 +135,7 @@ class DataTransfer {
    * @returns {void}
    */
   async sendOne(msg, socket) {
-    this.carryOut(msg, socket);
+    await this.carryOut(msg, socket);
   }
 
 
