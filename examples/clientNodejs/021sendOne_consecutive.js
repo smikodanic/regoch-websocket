@@ -1,7 +1,7 @@
 /**
  * $node 021sendOne_consecutive.js 210727090438377820
  * Send to one client several consecutive messages.
- * Open in another terminal $node 010onMessage.js
+ * Open client listener in another terminal $node 010onMessage.js
  */
 const { RWClientNodejs, lib } = require('../../index.js');
 const helper = lib.helper;

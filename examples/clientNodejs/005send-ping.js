@@ -27,14 +27,15 @@ const main = async () => {
   const testClient = new TestClient(wcOpts);
   await testClient.connect();
 
+  console.log('Send 5 pings every 1 second and receive pongs...');
   await helper.sleep(2000);
-  console.log('Sending pings every 1 second...');
-
-  testClient.ping(1000, 5); // send ping 5 times, every 1 second
 
   testClient.on('pong', msgSTR => {
     console.log('received::', msgSTR);
   });
+
+  // IMPORTANT: Use ping() method after on('pong', cb) listener
+  await testClient.ping(1000, 5); // send ping 5 times, every 1 second
 };
 
 main();

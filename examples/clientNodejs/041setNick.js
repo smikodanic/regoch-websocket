@@ -1,5 +1,5 @@
 /**
- * Set socket nick name.
+ * Set socket nick name on the server side -> socket.extension.nickname
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -31,7 +31,7 @@ const main = async () => {
 
 
   console.log('setting the nick...');
-  testClient.setNick('John Doe');
+  await testClient.setNick('John Doe');
 };
 
 

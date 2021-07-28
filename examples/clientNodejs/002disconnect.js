@@ -28,7 +28,7 @@ const main = async () => {
 
 
   // disconnect from websocket server after 3 seconds
-  console.log('Waiting for 3 seconds to disconnect...');
+  console.log('Wait for 3 seconds to disconnect...');
   await helper.sleep(3000);
   testClient.disconnect();
 };

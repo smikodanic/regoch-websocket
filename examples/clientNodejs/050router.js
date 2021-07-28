@@ -1,5 +1,6 @@
 /**
- * The example shows how to implement router
+ * The example shows how to implement regoch-router on the client side.
+ * This script sends the message to the server and server responds with the route command which is used in regoch-router.
  */
 const { RWClientNodejs, lib } = require('../../index.js');
 const helper = lib.helper;
@@ -30,7 +31,7 @@ const main = async () => {
 
   // IMPORTANT!!! Set the message listener before the question is sent.
   testClient.once('route', (msg, msgSTR, msgBUF) => {
-    console.log('msg::', msg);
+    console.log('route msg received::', msg);
 
     const payload = msg.payload; // {uri:string, body?:any}
 
@@ -54,7 +55,7 @@ const main = async () => {
 
   console.log('sending /send/me/back route...');
   await helper.sleep(400);
-  testClient.route('/send/me/back');
+  await testClient.route('/send/me/back');
 
 };
 

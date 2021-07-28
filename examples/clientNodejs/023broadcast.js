@@ -1,6 +1,6 @@
 /**
  * Send message (payload) to all clients except the sender.
- * Open clients in other two terminals.
+ * Open multiple clients for leistening messages in the another terminal with $node 010onMessage.js
  */
 const { RWClientNodejs } = require('../../index.js');
 

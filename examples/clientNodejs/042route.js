@@ -1,5 +1,5 @@
 /**
- * Send route to the server.
+ * Send route to the server. Integrate regoch-router on the server side and build complex, real-time, websocket API.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -31,7 +31,7 @@ const main = async () => {
 
 
   console.log('sending route...');
-  testClient.route('shop/product/22', {limit: 15});
+  await testClient.route('shop/product/22', {limit: 15});
 };
 
 

@@ -42,7 +42,7 @@ class Client13jsonRWS extends DataParser {
   /************* CLIENT CONNECTOR ************/
   /**
    * Connect to the websocket server.
-   * @returns {void}
+   * @returns {Promise<Socket>}
    */
   connect() {
     // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
@@ -95,13 +95,13 @@ class Client13jsonRWS extends DataParser {
 
 
   /**
-   * Disconnect from the websocket server.
+   * Disconnect from the server by sending the "close" websocket frame which contains opcode 0x8.
    * @returns {void}
    */
-  async disconnect() {
+  disconnect() {
     this.blockReconnect();
     const closeBUF = this.ctrlClose(1);
-    await this.socketWrite(closeBUF);
+    this.socketWrite(closeBUF);
     // this.socket.destroy();
   }
 
@@ -165,7 +165,6 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Socket events. According to https://nodejs.org/api/net.html#net_class_net_socket.
-   * @param {Socket} socket
    */
   onEvents() {
     this.clientRequest.on('socket', socket => {
@@ -241,7 +240,7 @@ class Client13jsonRWS extends DataParser {
         `.cliBoja('blue'));
 
 
-        this.eventEmitter.emit('connected');
+        this.eventEmitter.emit('connected', socket);
         this.onMessage(false, true); // emits the messages to eventEmitter
       } catch (err) {
         socket.emit('error', err);
@@ -251,9 +250,10 @@ class Client13jsonRWS extends DataParser {
 
 
   /**
-   * Receive the message event and push it to msgStream.
+   * Receive the message as buffer and convert it in the appropriate subprotocol format.
+   * If toEmit is true push it to eventEmitter as 'message' event.
    * @param {Function} cb - callback function
-   * @param {boolean} toEmit - to emit the message into the eventEmitter
+   * @param {boolean} toEmit - if true emit the message in the eventEmitter as 'message' event
    * @returns {void}
    */
   onMessage(cb, toEmit) {
@@ -261,7 +261,6 @@ class Client13jsonRWS extends DataParser {
     let msgBUFarr = [];
 
     this.socket.on('data', msgBUFchunk => {
-
       try {
         msgBUFarr.push(msgBUFchunk);
         let msgBUF = Buffer.concat(msgBUFarr);
@@ -301,13 +300,12 @@ class Client13jsonRWS extends DataParser {
       }
     });
 
-
   }
 
 
   /**
    * Parse websocket operation codes according to https://tools.ietf.org/html/rfc6455#section-5.1
-   * @param {string} msgSTR - received message
+   * @param {string} msgSTR - received message converted from buffer to string
    */
   opcodes(msgSTR) {
     if (msgSTR === 'OPCODE 0x8 CLOSE') {
@@ -321,6 +319,98 @@ class Client13jsonRWS extends DataParser {
       if (this.wcOpts.debug) { console.log('Opcode 0xA: PONG received'.cliBoja('yellow')); }
       this.eventEmitter.emit('pong', msgSTR);
     }
+  }
+
+
+  /************* SEND MESSAGE TO SERVER ************/
+  /**
+   * Send message to the websocket server after the message is processed by subprotocol and DataParser.
+   * @param {number|number[]} to - final destination: 210201164339351900
+   * @param {string} cmd - command
+   * @param {any} payload - message payload
+   * @returns {Promise<void>}
+   */
+  async carryOut(to, cmd, payload) {
+    const id = helper.generateID(); // the message ID
+    const from = +this.socketID; // the sender ID
+    if (!to) { to = 0; } // server ID is 0
+    const msg = {id, from, to, cmd, payload};
+    const msgSTR = jsonRWS.outgoing(msg);
+
+    // the message must be defined and client must be connected to the server
+    if (!!msgSTR) {
+      const msgBUF = this.outgoing(msgSTR, 1);
+      await this.socketWrite(msgBUF);
+    } else {
+      this.debugger('The message is not defined.');
+    }
+  }
+
+
+  /**
+   * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
+   * and send message in buffer format.
+   * @param {Buffer} msgBUF - message to server
+   * @returns {Promise<void>}
+   */
+  async socketWrite(msgBUF) {
+    await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
+    if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
+      this.socket.write(msgBUF);
+    } else {
+      this.debugger('Socket is not writeble or doesn\'t exist');
+    }
+  }
+
+
+  /**
+   * Send message (payload) to one client.
+   * @param {number} to - 210201164339351900
+   * @param {any} msg - message sent to the client
+   * @returns {void}
+   */
+  async sendOne(to, msg) {
+    const cmd = 'socket/sendone';
+    const payload = msg;
+    await this.carryOut(to, cmd, payload);
+  }
+
+
+  /**
+   * Send message (payload) to one or more clients.
+   * @param {number[]} to - [210205081923171300, 210205082042463230]
+   * @param {any} msg - message sent to the clients
+   * @returns {void}
+   */
+  async send(to, msg) {
+    const cmd = 'socket/send';
+    const payload = msg;
+    await this.carryOut(to, cmd, payload);
+  }
+
+
+  /**
+   * Send message (payload) to all clients except the sender.
+   * @param {any} msg - message sent to the clients
+   * @returns {void}
+   */
+  async broadcast(msg) {
+    const to = 0;
+    const cmd = 'socket/broadcast';
+    const payload = msg;
+    await this.carryOut(to, cmd, payload);
+  }
+
+  /**
+   * Send message (payload) to all clients and the sender.
+   * @param {any} msg - message sent to the clients
+   * @returns {void}
+   */
+  async sendAll(msg) {
+    const to = 0;
+    const cmd = 'socket/sendall';
+    const payload = msg;
+    await this.carryOut(to, cmd, payload);
   }
 
 
@@ -340,7 +430,7 @@ class Client13jsonRWS extends DataParser {
       const pingBUF = this.ctrlPing();
       await this.socketWrite(pingBUF);
       await helper.sleep(ms);
-      this.ping(ms);
+      await this.ping(ms);
     }
   }
 
@@ -419,106 +509,11 @@ class Client13jsonRWS extends DataParser {
 
 
 
-
-  /************* SEND MESSAGE TO OTHER CLIENTS ************/
-  /**
-   * Send message to the websocket server after the message is processed by subprotocol and DataParser.
-   * @param {number|number[]} to - final destination: 210201164339351900
-   * @param {string} cmd - command
-   * @param {any} payload - message payload
-   * @returns {void}
-   */
-  async carryOut(to, cmd, payload) {
-    const id = helper.generateID(); // the message ID
-    const from = +this.socketID; // the sender ID
-    if (!to) { to = 0; } // server ID is 0
-    const msg = {id, from, to, cmd, payload};
-    const msgSTR = jsonRWS.outgoing(msg);
-
-    // the message must be defined and client must be connected to the server
-    if (!!msgSTR) {
-      const msgBUF = this.outgoing(msgSTR, 1);
-      await this.socketWrite(msgBUF);
-    } else {
-      this.debugger('The message is not defined.');
-    }
-  }
-
-
-  /**
-   * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
-   * and send message in buffer format.
-   * @param {Buffer} msgBUF - message to server
-   * @returns {Promise<void>}
-   */
-  async socketWrite(msgBUF) {
-    await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
-    if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
-      this.socket.write(msgBUF);
-    } else {
-      this.debugger('Socket is not writeble or doesn\'t exist');
-    }
-  }
-
-
-
-  /**
-   * Send message (payload) to one client.
-   * @param {number} to - 210201164339351900
-   * @param {any} msg - message sent to the client
-   * @returns {void}
-   */
-  async sendOne(to, msg) {
-    const cmd = 'socket/sendone';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
-  }
-
-
-  /**
-   * Send message (payload) to one or more clients.
-   * @param {number[]} to - [210205081923171300, 210205082042463230]
-   * @param {any} msg - message sent to the clients
-   * @returns {void}
-   */
-  async send(to, msg) {
-    const cmd = 'socket/send';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
-  }
-
-
-  /**
-   * Send message (payload) to all clients except the sender.
-   * @param {any} msg - message sent to the clients
-   * @returns {void}
-   */
-  async broadcast(msg) {
-    const to = 0;
-    const cmd = 'socket/broadcast';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
-  }
-
-  /**
-   * Send message (payload) to all clients and the sender.
-   * @param {any} msg - message sent to the clients
-   * @returns {void}
-   */
-  async sendAll(msg) {
-    const to = 0;
-    const cmd = 'socket/sendall';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
-  }
-
-
-
   /************* ROOM ************/
   /**
    * Subscribe in the room.
    * @param {string} roomName
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async roomEnter(roomName) {
     const to = 0;
@@ -530,7 +525,7 @@ class Client13jsonRWS extends DataParser {
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async roomExit(roomName) {
     const to = 0;
@@ -541,7 +536,7 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Unsubscribe from all rooms.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async roomExitAll() {
     const to = 0;
@@ -554,7 +549,7 @@ class Client13jsonRWS extends DataParser {
    * Send message to the room.
    * @param {string} roomName
    * @param {any} msg
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async roomSend(roomName, msg) {
     const to = roomName;
@@ -565,7 +560,7 @@ class Client13jsonRWS extends DataParser {
 
 
 
-  /********* SEND MESSAGE (COMMAND) TO SERVER *********/
+  /********* MISC *********/
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
@@ -595,17 +590,7 @@ class Client13jsonRWS extends DataParser {
 
 
 
-
-  /*********** MISC ************/
-  /**
-   * Debugger. Use it as this.debugger(var1, var2, var3)
-   * @returns {void}
-   */
-  debugger(...textParts) {
-    const text = textParts.join(' ');
-    if (this.wcOpts.debug) { console.log(text.cliBoja('yellow')); }
-  }
-
+  /*********** LISTENERS ************/
   /**
    * Wrapper around the eventEmitter
    * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error',  'route'
@@ -622,6 +607,20 @@ class Client13jsonRWS extends DataParser {
    */
   once(eventName, listener) {
     return this.eventEmitter.once(eventName, listener);
+  }
+
+
+
+
+
+  /******* PRIVATES ********/
+  /**
+   * Debugger. Use it as this.debugger(var1, var2, var3)
+   * @returns {void}
+   */
+  debugger(...textParts) {
+    const text = textParts.join(' ');
+    if (this.wcOpts.debug) { console.log(text.cliBoja('yellow')); }
   }
 
 

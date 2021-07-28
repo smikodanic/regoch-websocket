@@ -1,6 +1,6 @@
 /**
  * Send to one or many clients.
- * Open clients in other two terminals.
+ * Open multiple clients for leistening messages in the another terminal with $node 010onMessage.js
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -27,7 +27,7 @@ const main = async () => {
 
 
   console.log('Message sent to multiple clients.');
-  await testClient.send([210725152743550900, 210725153202769120], 'Some message to multiple clients');
+  await testClient.send([210728101524655740, 210728102105725060, 210728102125198270], 'Some message to multiple clients');
 };
 
 

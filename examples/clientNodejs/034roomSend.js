@@ -1,6 +1,6 @@
 /**
  * Enter one room.
- * Open 031roomEnter.js in other terminals to test this script.
+ * Open 031roomEnter.js in one terminal and then run this script in another terminal.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -31,7 +31,7 @@ const main = async () => {
   });
 
 
-  console.log('sending to room...');
+  console.log('sending to room "sasa"...');
   testClient.roomSend('sasa', 'Some message to room sasa.');
 };
 

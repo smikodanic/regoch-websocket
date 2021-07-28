@@ -1,5 +1,6 @@
 /**
  * Send to one client.
+ * Open client for leistening messages in the another terminal with $node 010onMessage.js
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -26,7 +27,7 @@ const main = async () => {
 
 
   console.log('message sent');
-  await testClient.sendOne(210726155519554340, 'some message');
+  await testClient.sendOne(210728101524655740, 'some message');
 };
 
 
