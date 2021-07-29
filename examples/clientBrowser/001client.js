@@ -13,27 +13,27 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
 
   /*** Questions Tests */
-  async infoSocketId_test() {
+  async questionSocketId_test() {
     try {
-      const socketID = await this.infoSocketId();
+      const socketID = await this.questionSocketId();
       $('[data-text="socketID"]').text(socketID);
     } catch (err) {
       console.error(err);
     }
   }
 
-  async infoSocketList_test() {
+  async questionSocketList_test() {
     try {
-      const socketIDs = await this.infoSocketList();
+      const socketIDs = await this.questionSocketList();
       $('[data-text="socketIDs"]').text(JSON.stringify(socketIDs));
     } catch (err) {
       console.error(err);
     }
   }
 
-  async infoRoomList_test() {
+  async questionRoomList_test() {
     try {
-      const rooms = await this.infoRoomList(); // [{name, socketIDs}]
+      const rooms = await this.questionRoomList(); // [{name, socketIDs}]
       if (!!rooms) {
         const roomNames = rooms.map(room => room.name);
         $('[data-text="roomNames"]').text(roomNames);
@@ -43,9 +43,9 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
     }
   }
 
-  async infoRoomListmy_test() {
+  async questionRoomListmy_test() {
     try {
-      const rooms = await this.infoRoomListmy(); // [{name, socketIDs}]
+      const rooms = await this.questionRoomListmy(); // [{name, socketIDs}]
       if (!!rooms) {
         const roomNames = rooms.map(room => room.name);
         $('[data-text="myRoomNames"]').text(roomNames);
@@ -175,6 +175,10 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
       console.log('msg (message after subprotocol)::', msg); // message after subprotocol
       console.log('msgSTR (message string)::', msgSTR); // received message
       $('#incomingMessage').text(msg.payload);
+    });
+
+    this.on('message-error',err => {
+      console.error(err);
     });
   }
 

@@ -6,6 +6,7 @@
  */
 const eventEmitter = require('./aux/eventEmitter');
 const jsonRWS = require('../../lib/subprotocol/jsonRWS');
+const raw = require('../../lib/subprotocol/raw');
 const helper = require('../../lib/helper');
 
 
@@ -18,15 +19,15 @@ class Client13jsonRWS {
     this.wcOpts = wcOpts; // websocket client options
     this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
     this.socketID; // socket ID number, for example: 210214082949459100
-
     this.attempt = 1; // reconnect attempt counter
+    this.subprotocolLib;
   }
 
 
   /************* CLIENT CONNECTOR ************/
   /**
    * Connect to the websocket server.
-   * @returns {Promise<Socket>}
+   * @returns {Promise<WebSocket>}
    */
   connect() {
     const wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
@@ -45,7 +46,6 @@ class Client13jsonRWS {
 
   /**
    * Disconnect from the websocket server.
-   * @returns {void}
    */
   disconnect() {
     if (!!this.wsocket) { this.wsocket.close(); }
@@ -80,15 +80,21 @@ class Client13jsonRWS {
 
   /**
    * Event listeners.
-   * @returns {void}
    */
   onEvents() {
     this.wsocket.onopen = async (openEvt) => {
       this.onMessage();
       console.log('WS Connection opened');
+
       this.attempt = 1;
-      this.socketID = await this.infoSocketId();
-      console.log(`socketID: ${this.socketID}`);
+
+      // define subprotocol library
+      if (!!this.wsocket && this.wsocket.protocol === 'raw') { this.subprotocolLib = raw; }
+      else if (!!this.wsocket && this.wsocket.protocol === 'jsonRWS') { this.subprotocolLib = jsonRWS; }
+      else { this.subprotocolLib = raw; }
+
+      this.socketID = await this.questionSocketId();
+      console.log(`socketID: ${this.socketID}, subprotocol(handshaked): "${this.wsocket.protocol}"`);
       eventEmitter.emit('connected');
     };
 
@@ -108,34 +114,43 @@ class Client13jsonRWS {
 
   /************* RECEIVER ************/
   /**
-   * Receive the message event and push it to msgStream.
-   * @returns {void}
+   * Receive the message as buffer and convert it in the appropriate subprotocol format.
+   * If toEmit is true push it to eventEmitter as 'message' event.
    */
   onMessage() {
-    this.wsocket.onmessage = event => {
+    if (!this.wsocket) { return; }
+    const subprotocol = this.wsocket.protocol; // jsonRWS || raw
+
+    this.wsocket.addEventListener('message', event => {
       try {
         const msgSTR = event.data;
-        this.debugger('Received::', msgSTR);
-        const msg = jsonRWS.incoming(msgSTR); // test against subprotocol rules and convert string to object);
+        this.debugger('Received msgSTR::', msgSTR);
 
+        /**
+           * Test if the message contains the delimiter.
+           * Delimiter is important because the network is splitting large message in the chunks of data so we need to know when the message reached the end and new message is starting.
+           * A TCP network chunk is around 1500 bytes. To check it use linux command: $ ifconfig | grep -i MTU
+           * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
+           */
+        const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
+        if (!delimiter_reg.test(msgSTR)) { throw new Error(`Subprotocol "${subprotocol}" delimiter ${this.subprotocolLib.delimiter} not found in the received message.`); }
+
+        const msg = this.subprotocolLib.incoming(msgSTR);
+
+        // dispatch
         const detail = {msg, msgSTR};
-        if (msg.cmd === 'route') { eventEmitter.emit('route', detail); }
-        else if (msg.cmd === 'info/socket/id') { eventEmitter.emit('question', detail); }
-        else if (msg.cmd === 'info/socket/list') { eventEmitter.emit('question', detail); }
-        else if (msg.cmd === 'info/room/list') { eventEmitter.emit('question', detail); }
-        else if (msg.cmd === 'info/room/listmy') { eventEmitter.emit('question', detail); }
+        if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { eventEmitter.emit('route', detail); }
+        else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { eventEmitter.emit('question', detail); }
         else { eventEmitter.emit('message', detail); }
 
       } catch (err) {
-        console.error(err);
+        eventEmitter.emit('message-error', err);
       }
-    };
+    });
+
   }
 
 
-
-  /************* QUESTIONS ************/
-  /*** Send a question to the websocket server and wait for the answer. */
   /**
    * Send question and expect the answer.
    * @param {string} cmd - command
@@ -143,27 +158,25 @@ class Client13jsonRWS {
    */
   question(cmd) {
     // send the question
-    const payload = undefined;
     const to = this.socketID;
+    const payload = undefined;
     this.carryOut(to, cmd, payload);
 
     // receive the answer
     return new Promise(async (resolve, reject) => {
-      this.once('question', async (msg, msgSTR) => {
-        if (msg.cmd === cmd) { resolve(msg); }
-        else { reject(new Error('Received cmd is not same as sent cmd.')); }
-      });
+      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
       await helper.sleep(this.wcOpts.questionTimeout);
       reject(new Error(`No answer for the question: ${cmd}`));
     });
   }
 
+
   /**
    * Send question about my socket ID.
    * @returns {Promise<number>}
    */
-  async infoSocketId() {
-    const answer = await this.question('info/socket/id');
+  async questionSocketId() {
+    const answer = await this.question('question/socket/id');
     this.socketID = +answer.payload;
     return this.socketID;
   }
@@ -172,8 +185,8 @@ class Client13jsonRWS {
    * Send question about all socket IDs connected to the server.
    * @returns {Promise<number[]>}
    */
-  async infoSocketList() {
-    const answer = await this.question('info/socket/list');
+  async questionSocketList() {
+    const answer = await this.question('question/socket/list');
     return answer.payload;
   }
 
@@ -181,8 +194,8 @@ class Client13jsonRWS {
    * Send question about all rooms in the server.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async infoRoomList() {
-    const answer = await this.question('info/room/list');
+  async questionRoomList() {
+    const answer = await this.question('question/room/list');
     return answer.payload;
   }
 
@@ -190,8 +203,8 @@ class Client13jsonRWS {
    * Send question about all rooms where the client was entered.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async infoRoomListmy() {
-    const answer = await this.question(`info/room/listmy`);
+  async questionRoomListmy() {
+    const answer = await this.question(`question/room/listmy`);
     return answer.payload;
   }
 
@@ -206,7 +219,6 @@ class Client13jsonRWS {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
-   * @returns {void}
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
@@ -230,7 +242,6 @@ class Client13jsonRWS {
    * Send message (payload) to one client.
    * @param {number} to - 210201164339351900
    * @param {any} msg - message sent to the client
-   * @returns {void}
    */
   async sendOne(to, msg) {
     const cmd = 'socket/sendone';
@@ -243,7 +254,6 @@ class Client13jsonRWS {
    * Send message (payload) to one or more clients.
    * @param {number[]} to - [210205081923171300, 210205082042463230]
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async send(to, msg) {
     const cmd = 'socket/send';
@@ -255,7 +265,6 @@ class Client13jsonRWS {
   /**
    * Send message (payload) to all clients except the sender.
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async broadcast(msg) {
     const to = 0;
@@ -267,7 +276,6 @@ class Client13jsonRWS {
   /**
    * Send message (payload) to all clients and the sender.
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async sendAll(msg) {
     const to = 0;
@@ -282,7 +290,6 @@ class Client13jsonRWS {
   /**
    * Subscribe in the room.
    * @param {string} roomName
-   * @returns {void}
    */
   async roomEnter(roomName) {
     const to = 0;
@@ -294,7 +301,6 @@ class Client13jsonRWS {
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
-   * @returns {void}
    */
   async roomExit(roomName) {
     const to = 0;
@@ -305,7 +311,6 @@ class Client13jsonRWS {
 
   /**
    * Unsubscribe from all rooms.
-   * @returns {void}
    */
   async roomExitAll() {
     const to = 0;
@@ -318,7 +323,6 @@ class Client13jsonRWS {
    * Send message to the room.
    * @param {string} roomName
    * @param {any} msg
-   * @returns {void}
    */
   async roomSend(roomName, msg) {
     const to = roomName;
@@ -334,7 +338,6 @@ class Client13jsonRWS {
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
-   * @returns {void}
    */
   async setNick(nickname) {
     const to = 0;
@@ -348,7 +351,6 @@ class Client13jsonRWS {
    * Send route command.
    * @param {string} uri - route URI, for example /shop/product/55
    * @param {any} body - body
-   * @returns {void}
    */
   async route(uri, body) {
     const to = 0;
@@ -363,7 +365,7 @@ class Client13jsonRWS {
   /*********** LISTENERS ************/
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
@@ -374,21 +376,22 @@ class Client13jsonRWS {
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
-    return eventEmitter.on(eventName, event => {
+    return eventEmitter.once(eventName, event => {
       listener.call(null, event.detail.msg, event.detail.msgSTR);
     });
   }
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
-  off(eventName) {
-    return eventEmitter.off(eventName);
+  off(eventName, listener) {
+    return eventEmitter.off(eventName, listener);
   }
 
 
@@ -396,7 +399,6 @@ class Client13jsonRWS {
   /*********** MISC ************/
   /**
    * Debugger. Use it as this.debug(var1, var2, var3)
-   * @returns {void}
    */
   debugger(...textParts) {
     const text = textParts.join('');
@@ -421,7 +423,7 @@ if (typeof window !== 'undefined') {
   window.regochWebsocket = { Client13jsonRWS };
 }
 
-},{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"./aux/eventEmitter":2}],2:[function(require,module,exports){
+},{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"../../lib/subprotocol/raw":5,"./aux/eventEmitter":2}],2:[function(require,module,exports){
 class EventEmitter {
 
   constructor() {
@@ -480,12 +482,26 @@ class EventEmitter {
 
 
   /**
-   * Stop listening the event for multiple listeners defined with on().
+   * Stop listening the event for specific listener.
+   * @param {string} eventName - event name, for example: 'pushstate'
+   * @param {Function} listener - callback function with event parameter
+   * @returns {void}
+   */
+  off(eventName, listener) {
+    const listenerCB = event => {
+      listener(event);
+    };
+    window.removeEventListener(eventName, listenerCB);
+  }
+
+
+  /**
+   * Stop listening the event for all listeners defined with on().
    * For example eventEmitter.on('msg', fja1) & eventEmitter.on('msg', fja2) then eventEmitter.off('msg') will remove fja1 and fja2 listeners.
    * @param {string} eventName - event name, for example: 'pushstate'
    * @returns {void}
    */
-  off(eventName) {
+  offAll(eventName) {
     let ind = 0;
     for (const activeOn of this.activeOns) {
       if (activeOn.eventName === eventName) {
@@ -523,10 +539,10 @@ class Helper {
    * @returns {number}
    */
   generateID() {
-    const rnd = Math.random() * 1000;
-    const rrr = Math.floor(rnd);
+    const rnd = Math.random().toString();
+    const rrr = rnd.replace('0.', '').substring(0,3);
 
-    const timestamp = new Date();
+    const timestamp = new Date(); // UTC (Greenwich time)
     const tsp = timestamp.toISOString()
       .replace(/^20/, '')
       .replace(/\-/g, '')
@@ -744,27 +760,27 @@ class JsonRWS {
       eventEmitter.emit('route', msg, socket, dataTransfer, socketStorage, eventEmitter); }
 
 
-    /*** info commands ***/
-    else if (cmd === 'info/socket/id') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'info/socket/id'}
+    /*** question commands ***/
+    else if (cmd === 'question/socket/id') {
+      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/socket/id'}
       msg.payload = socket.extension.id;
       socket.extension.sendSelf(msg); }
 
-    else if (cmd === 'info/socket/list') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'info/socket/list'}
+    else if (cmd === 'question/socket/list') {
+      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/socket/list'}
       const sockets = await socketStorage.find();
       const socket_ids_nicks = sockets.map(socket => { return {id: socket.extension.id, nickname: socket.extension.nickname}; });
       msg.payload = socket_ids_nicks; // {id:number, nickname:string}
       socket.extension.sendSelf(msg); }
 
-    else if (cmd === 'info/room/list') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'info/room/list'}
+    else if (cmd === 'question/room/list') {
+      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/room/list'}
       const rooms = await socketStorage.roomList();
       msg.payload = rooms;
       socket.extension.sendSelf(msg); }
 
-    else if (cmd === 'info/room/listmy') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'info/room/listmy'}
+    else if (cmd === 'question/room/listmy') {
+      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/room/listmy'}
       const rooms = await socketStorage.roomListOf(msg.from);
       msg.payload = rooms;
       socket.extension.sendSelf(msg); }
@@ -802,6 +818,62 @@ class JsonRWS {
 
 
 module.exports = new JsonRWS();
+
+},{}],5:[function(require,module,exports){
+/**
+ * Subprotocol name: raw
+ * HTTP header: "Sec-WebSocket-Protocol": "raw"
+ *
+ * Subprotocol description:
+ *  The simplest subprotocol.
+ */
+
+
+class Raw {
+
+  constructor() {
+    this.delimiter = '';
+  }
+
+  /*********** INCOMING MESSAGES ***********/
+  /**
+   * Execute the subprotocol for incoming messages.
+   * @param {string} msgSTR -incoming message
+   * @returns {string}
+   */
+  incoming(msgSTR) {
+    const msg = msgSTR;
+    return msg;
+  }
+
+
+
+  /*********** OUTGOING MESSAGES ***********/
+  /**
+   * Execute the subprotocol for outgoing messages.
+   * @param {any} msg - outgoing message
+   * @returns {string}
+   */
+  outgoing(msg) {
+    let msgSTR = msg;
+    if (typeof msg === 'object') { msgSTR = JSON.stringify(msg); }
+    return msgSTR;
+  }
+
+
+
+  /*********** PROCESS MESSAGES ***********/
+  /**
+   * Process client messages internally.
+   * @returns {void}
+   */
+  async process() {}
+
+
+}
+
+
+module.exports = new Raw();
 
 },{}]},{},[1]);
 

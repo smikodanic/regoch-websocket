@@ -45,10 +45,10 @@
 
 
     <h4>Questions</h4>
-    <button onclick="testCB.infoSocketId_test()">Get my ID</button> <span data-text="socketID"></span>
-    <br><button onclick="testCB.infoSocketList_test()">List socket IDs</button> <span data-text="socketIDs"></span>
-    <br><button onclick="testCB.infoRoomList_test()">List all rooms</button> <span data-text="roomNames"></span>
-    <br><button onclick="testCB.infoRoomListmy_test()">List my rooms</button> <span data-text="myRoomNames"></span>
+    <button onclick="testCB.questionSocketId_test()">Get my ID</button> <span data-text="socketID"></span>
+    <br><button onclick="testCB.questionSocketList_test()">List socket IDs</button> <span data-text="socketIDs"></span>
+    <br><button onclick="testCB.questionRoomList_test()">List all rooms</button> <span data-text="roomNames"></span>
+    <br><button onclick="testCB.questionRoomListmy_test()">List my rooms</button> <span data-text="myRoomNames"></span>
 
 
     <br><br>
@@ -97,9 +97,9 @@
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "route", "payload": {uri: "shop/login", body: {username:"mark", password:"thG5$#w"}}}
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "route", "payload": {uri: "shop/product/55"}}
 
-    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "info/socket/id"}
-    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "info/socket/list"}
-    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "info/room/list"}
+    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "question/socket/id"}
+    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "question/socket/list"}
+    {"id": 210129163129492000, "from": 210129163129492111, "cmd": "question/room/list"}
 
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "socket/sendone", to: 21020213324769896, "payload": "Some message to another client"}
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "socket/send", to: [21020213324769896], "payload": "Some message to another clients"}

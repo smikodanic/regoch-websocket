@@ -58,7 +58,6 @@ class DataTransfer {
           if (!delimiter_reg.test(msgSTR)) { return; }
 
           msg = this.subprotocolLib.incoming(msgSTR); // convert the string message to format defined by the subprotocol
-          console.log(Date.now(), msg.payload);
           this.subprotocolLib.process(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
         }
 

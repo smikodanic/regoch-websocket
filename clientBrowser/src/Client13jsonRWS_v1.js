@@ -5,7 +5,6 @@
  */
 const eventEmitter = require('./aux/eventEmitter');
 const jsonRWS = require('../../lib/subprotocol/jsonRWS');
-const raw = require('../../lib/subprotocol/raw');
 const helper = require('../../lib/helper');
 
 
@@ -18,15 +17,15 @@ class Client13jsonRWS {
     this.wcOpts = wcOpts; // websocket client options
     this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
     this.socketID; // socket ID number, for example: 210214082949459100
+
     this.attempt = 1; // reconnect attempt counter
-    this.subprotocolLib;
   }
 
 
   /************* CLIENT CONNECTOR ************/
   /**
    * Connect to the websocket server.
-   * @returns {Promise<WebSocket>}
+   * @returns {Promise<Socket>}
    */
   connect() {
     const wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
@@ -45,6 +44,7 @@ class Client13jsonRWS {
 
   /**
    * Disconnect from the websocket server.
+   * @returns {void}
    */
   disconnect() {
     if (!!this.wsocket) { this.wsocket.close(); }
@@ -79,21 +79,15 @@ class Client13jsonRWS {
 
   /**
    * Event listeners.
+   * @returns {void}
    */
   onEvents() {
     this.wsocket.onopen = async (openEvt) => {
       this.onMessage();
       console.log('WS Connection opened');
-
       this.attempt = 1;
-
-      // define subprotocol library
-      if (!!this.wsocket && this.wsocket.protocol === 'raw') { this.subprotocolLib = raw; }
-      else if (!!this.wsocket && this.wsocket.protocol === 'jsonRWS') { this.subprotocolLib = jsonRWS; }
-      else { this.subprotocolLib = raw; }
-
-      this.socketID = await this.questionSocketId();
-      console.log(`socketID: ${this.socketID}, subprotocol(handshaked): "${this.wsocket.protocol}"`);
+      this.socketID = await this.infoSocketId();
+      console.log(`socketID: ${this.socketID}`);
       eventEmitter.emit('connected');
     };
 
@@ -113,43 +107,34 @@ class Client13jsonRWS {
 
   /************* RECEIVER ************/
   /**
-   * Receive the message as buffer and convert it in the appropriate subprotocol format.
-   * If toEmit is true push it to eventEmitter as 'message' event.
+   * Receive the message event and push it to msgStream.
+   * @returns {void}
    */
   onMessage() {
-    if (!this.wsocket) { return; }
-    const subprotocol = this.wsocket.protocol; // jsonRWS || raw
-
-    this.wsocket.addEventListener('message', event => {
+    this.wsocket.onmessage = event => {
       try {
         const msgSTR = event.data;
-        this.debugger('Received msgSTR::', msgSTR);
+        this.debugger('Received::', msgSTR);
+        const msg = jsonRWS.incoming(msgSTR); // test against subprotocol rules and convert string to object);
 
-        /**
-           * Test if the message contains the delimiter.
-           * Delimiter is important because the network is splitting large message in the chunks of data so we need to know when the message reached the end and new message is starting.
-           * A TCP network chunk is around 1500 bytes. To check it use linux command: $ ifconfig | grep -i MTU
-           * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
-           */
-        const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
-        if (!delimiter_reg.test(msgSTR)) { throw new Error(`Subprotocol "${subprotocol}" delimiter ${this.subprotocolLib.delimiter} not found in the received message.`); }
-
-        const msg = this.subprotocolLib.incoming(msgSTR);
-
-        // dispatch
         const detail = {msg, msgSTR};
-        if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { eventEmitter.emit('route', detail); }
-        else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { eventEmitter.emit('question', detail); }
+        if (msg.cmd === 'route') { eventEmitter.emit('route', detail); }
+        else if (msg.cmd === 'info/socket/id') { eventEmitter.emit('question', detail); }
+        else if (msg.cmd === 'info/socket/list') { eventEmitter.emit('question', detail); }
+        else if (msg.cmd === 'info/room/list') { eventEmitter.emit('question', detail); }
+        else if (msg.cmd === 'info/room/listmy') { eventEmitter.emit('question', detail); }
         else { eventEmitter.emit('message', detail); }
 
       } catch (err) {
-        eventEmitter.emit('message-error', err);
+        console.error(err);
       }
-    });
-
+    };
   }
 
 
+
+  /************* QUESTIONS ************/
+  /*** Send a question to the websocket server and wait for the answer. */
   /**
    * Send question and expect the answer.
    * @param {string} cmd - command
@@ -157,25 +142,27 @@ class Client13jsonRWS {
    */
   question(cmd) {
     // send the question
-    const to = this.socketID;
     const payload = undefined;
+    const to = this.socketID;
     this.carryOut(to, cmd, payload);
 
     // receive the answer
     return new Promise(async (resolve, reject) => {
-      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
+      this.once('question', async (msg, msgSTR) => {
+        if (msg.cmd === cmd) { resolve(msg); }
+        else { reject(new Error('Received cmd is not same as sent cmd.')); }
+      });
       await helper.sleep(this.wcOpts.questionTimeout);
       reject(new Error(`No answer for the question: ${cmd}`));
     });
   }
 
-
   /**
    * Send question about my socket ID.
    * @returns {Promise<number>}
    */
-  async questionSocketId() {
-    const answer = await this.question('question/socket/id');
+  async infoSocketId() {
+    const answer = await this.question('info/socket/id');
     this.socketID = +answer.payload;
     return this.socketID;
   }
@@ -184,8 +171,8 @@ class Client13jsonRWS {
    * Send question about all socket IDs connected to the server.
    * @returns {Promise<number[]>}
    */
-  async questionSocketList() {
-    const answer = await this.question('question/socket/list');
+  async infoSocketList() {
+    const answer = await this.question('info/socket/list');
     return answer.payload;
   }
 
@@ -193,8 +180,8 @@ class Client13jsonRWS {
    * Send question about all rooms in the server.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async questionRoomList() {
-    const answer = await this.question('question/room/list');
+  async infoRoomList() {
+    const answer = await this.question('info/room/list');
     return answer.payload;
   }
 
@@ -202,8 +189,8 @@ class Client13jsonRWS {
    * Send question about all rooms where the client was entered.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async questionRoomListmy() {
-    const answer = await this.question(`question/room/listmy`);
+  async infoRoomListmy() {
+    const answer = await this.question(`info/room/listmy`);
     return answer.payload;
   }
 
@@ -218,6 +205,7 @@ class Client13jsonRWS {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
+   * @returns {void}
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
@@ -241,6 +229,7 @@ class Client13jsonRWS {
    * Send message (payload) to one client.
    * @param {number} to - 210201164339351900
    * @param {any} msg - message sent to the client
+   * @returns {void}
    */
   async sendOne(to, msg) {
     const cmd = 'socket/sendone';
@@ -253,6 +242,7 @@ class Client13jsonRWS {
    * Send message (payload) to one or more clients.
    * @param {number[]} to - [210205081923171300, 210205082042463230]
    * @param {any} msg - message sent to the clients
+   * @returns {void}
    */
   async send(to, msg) {
     const cmd = 'socket/send';
@@ -264,6 +254,7 @@ class Client13jsonRWS {
   /**
    * Send message (payload) to all clients except the sender.
    * @param {any} msg - message sent to the clients
+   * @returns {void}
    */
   async broadcast(msg) {
     const to = 0;
@@ -275,6 +266,7 @@ class Client13jsonRWS {
   /**
    * Send message (payload) to all clients and the sender.
    * @param {any} msg - message sent to the clients
+   * @returns {void}
    */
   async sendAll(msg) {
     const to = 0;
@@ -289,6 +281,7 @@ class Client13jsonRWS {
   /**
    * Subscribe in the room.
    * @param {string} roomName
+   * @returns {void}
    */
   async roomEnter(roomName) {
     const to = 0;
@@ -300,6 +293,7 @@ class Client13jsonRWS {
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
+   * @returns {void}
    */
   async roomExit(roomName) {
     const to = 0;
@@ -310,6 +304,7 @@ class Client13jsonRWS {
 
   /**
    * Unsubscribe from all rooms.
+   * @returns {void}
    */
   async roomExitAll() {
     const to = 0;
@@ -322,6 +317,7 @@ class Client13jsonRWS {
    * Send message to the room.
    * @param {string} roomName
    * @param {any} msg
+   * @returns {void}
    */
   async roomSend(roomName, msg) {
     const to = roomName;
@@ -337,6 +333,7 @@ class Client13jsonRWS {
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
+   * @returns {void}
    */
   async setNick(nickname) {
     const to = 0;
@@ -350,6 +347,7 @@ class Client13jsonRWS {
    * Send route command.
    * @param {string} uri - route URI, for example /shop/product/55
    * @param {any} body - body
+   * @returns {void}
    */
   async route(uri, body) {
     const to = 0;
@@ -364,7 +362,7 @@ class Client13jsonRWS {
   /*********** LISTENERS ************/
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
@@ -375,22 +373,21 @@ class Client13jsonRWS {
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
-    return eventEmitter.once(eventName, event => {
+    return eventEmitter.on(eventName, event => {
       listener.call(null, event.detail.msg, event.detail.msgSTR);
     });
   }
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
-   * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
+   * @param {string} eventName - event name: 'connected', 'message', 'route', 'question
    */
-  off(eventName, listener) {
-    return eventEmitter.off(eventName, listener);
+  off(eventName) {
+    return eventEmitter.off(eventName);
   }
 
 
@@ -398,6 +395,7 @@ class Client13jsonRWS {
   /*********** MISC ************/
   /**
    * Debugger. Use it as this.debug(var1, var2, var3)
+   * @returns {void}
    */
   debugger(...textParts) {
     const text = textParts.join('');
