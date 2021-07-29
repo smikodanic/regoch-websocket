@@ -1,5 +1,5 @@
 /**
- * Send question about all rooms where the client was entered.
+ * Send question about all rooms in the server.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -27,12 +27,13 @@ const main = async () => {
 
   // IMPORTANT!!! Set the message listener before the question is sent.
   testClient.on('message', (msg, msgSTR, msgBUF) => {
-    console.log('STRING message', msgSTR);
+    console.log('STRING message::', msgSTR);
   });
 
+
   // send question about the info
-  const rooms = await testClient.infoRoomListmy();
-  console.log('\nmy rooms::', rooms);
+  const rooms = await testClient.questionRoomList();
+  console.log('\nrooms::', rooms);
 };
 
 

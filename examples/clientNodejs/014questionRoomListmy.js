@@ -1,5 +1,5 @@
 /**
- * Send question about the client ID.
+ * Send question about all rooms where the client was entered.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -9,7 +9,6 @@ class TestClient extends RWClientNodejs {
     super(wcOpts);
   }
 }
-
 
 
 const main = async () => {
@@ -28,13 +27,12 @@ const main = async () => {
 
   // IMPORTANT!!! Set the message listener before the question is sent.
   testClient.on('message', (msg, msgSTR, msgBUF) => {
-    console.log('STRING message::', msgSTR);
+    console.log('STRING message', msgSTR);
   });
 
-
   // send question about the info
-  const socketID = await testClient.infoSocketId();
-  console.log('\nsocketID::', socketID);
+  const rooms = await testClient.questionRoomListmy();
+  console.log('\nmy rooms::', rooms);
 };
 
 

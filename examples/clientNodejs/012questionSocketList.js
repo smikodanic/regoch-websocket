@@ -1,5 +1,5 @@
 /**
- * Send question about all rooms in the server.
+ * Send question to list the server sockets.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -32,8 +32,8 @@ const main = async () => {
 
 
   // send question about the info
-  const rooms = await testClient.infoRoomList();
-  console.log('\nrooms::', rooms);
+  const sockets = await testClient.questionSocketList();
+  console.log('\nsockets::', sockets);
 };
 
 

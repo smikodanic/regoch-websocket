@@ -1,5 +1,5 @@
 /**
- * Send question to list the server sockets.
+ * Send question about the client ID.
  */
 const { RWClientNodejs } = require('../../index.js');
 
@@ -9,6 +9,7 @@ class TestClient extends RWClientNodejs {
     super(wcOpts);
   }
 }
+
 
 
 const main = async () => {
@@ -32,8 +33,8 @@ const main = async () => {
 
 
   // send question about the info
-  const sockets = await testClient.infoSocketList();
-  console.log('\nsockets::', sockets);
+  const socketID = await testClient.questionSocketId();
+  console.log('\nsocketID::', socketID);
 };
 
 

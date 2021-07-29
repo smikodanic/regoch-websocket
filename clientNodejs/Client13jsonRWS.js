@@ -26,8 +26,9 @@ class Client13jsonRWS extends DataParser {
     this.socket; // TCP Socket https://nodejs.org/api/net.html#net_class_net_socket
     this.socketID; // socket ID number, for example: 210214082949459100
     this.attempt = 1; // reconnect attempt counter
-    this.resHeaders; // onUpgrade response headers
     this.subprotocolLib;
+
+    this.resHeaders; // onUpgrade response headers
     this.wsKey; // the value of 'Sec-Websocket-Key' header
     this.clientRequest; // client HTTP request https://nodejs.org/api/http.html#http_class_http_clientrequest
 
@@ -96,7 +97,6 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Disconnect from the server by sending the "close" websocket frame which contains opcode 0x8.
-   * @returns {void}
    */
   disconnect() {
     this.blockReconnect();
@@ -241,7 +241,7 @@ class Client13jsonRWS extends DataParser {
 
 
         this.eventEmitter.emit('connected', socket);
-        this.onMessage(false, true); // emits the messages to eventEmitter
+        this.onMessage(); // emits the messages to eventEmitter
       } catch (err) {
         socket.emit('error', err);
       }
@@ -252,11 +252,8 @@ class Client13jsonRWS extends DataParser {
   /**
    * Receive the message as buffer and convert it in the appropriate subprotocol format.
    * If toEmit is true push it to eventEmitter as 'message' event.
-   * @param {Function} cb - callback function
-   * @param {boolean} toEmit - if true emit the message in the eventEmitter as 'message' event
-   * @returns {void}
    */
-  onMessage(cb, toEmit) {
+  onMessage() {
     const subprotocol = this.resHeaders['sec-websocket-protocol']; // jsonRWS || raw
     let msgBUFarr = [];
 
@@ -282,12 +279,10 @@ class Client13jsonRWS extends DataParser {
           msg = this.subprotocolLib.incoming(msgSTR);
         }
 
-        if(!!cb) { cb(msg, msgSTR, msgBUF); }
-
-        if (!!toEmit) {
-          if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { this.eventEmitter.emit('route', msg, msgSTR, msgBUF); }
-          else { this.eventEmitter.emit('message', msg, msgSTR, msgBUF); }
-        }
+        // dispatch
+        if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { this.eventEmitter.emit('route', msg, msgSTR, msgBUF); }
+        else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { this.eventEmitter.emit('question', msg, msgSTR, msgBUF); }
+        else { this.eventEmitter.emit('message', msg, msgSTR, msgBUF); }
 
         // reset
         msgBUFarr = [];
@@ -328,7 +323,6 @@ class Client13jsonRWS extends DataParser {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
-   * @returns {Promise<void>}
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
@@ -351,7 +345,6 @@ class Client13jsonRWS extends DataParser {
    * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
    * and send message in buffer format.
    * @param {Buffer} msgBUF - message to server
-   * @returns {Promise<void>}
    */
   async socketWrite(msgBUF) {
     await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
@@ -367,7 +360,6 @@ class Client13jsonRWS extends DataParser {
    * Send message (payload) to one client.
    * @param {number} to - 210201164339351900
    * @param {any} msg - message sent to the client
-   * @returns {void}
    */
   async sendOne(to, msg) {
     const cmd = 'socket/sendone';
@@ -380,7 +372,6 @@ class Client13jsonRWS extends DataParser {
    * Send message (payload) to one or more clients.
    * @param {number[]} to - [210205081923171300, 210205082042463230]
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async send(to, msg) {
     const cmd = 'socket/send';
@@ -392,7 +383,6 @@ class Client13jsonRWS extends DataParser {
   /**
    * Send message (payload) to all clients except the sender.
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async broadcast(msg) {
     const to = 0;
@@ -404,7 +394,6 @@ class Client13jsonRWS extends DataParser {
   /**
    * Send message (payload) to all clients and the sender.
    * @param {any} msg - message sent to the clients
-   * @returns {void}
    */
   async sendAll(msg) {
     const to = 0;
@@ -462,9 +451,7 @@ class Client13jsonRWS extends DataParser {
 
     // receive the answer
     return new Promise(async (resolve, reject) => {
-      this.onMessage(msgObj => {
-        if (msgObj.cmd === cmd) { resolve(msgObj); }
-      }, false);
+      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
       await helper.sleep(this.wcOpts.questionTimeout);
       reject(new Error(`No answer for the question: ${cmd}`));
     });
@@ -474,8 +461,8 @@ class Client13jsonRWS extends DataParser {
    * Send question about my socket ID.
    * @returns {Promise<number>}
    */
-  async infoSocketId() {
-    const answer = await this.question('info/socket/id');
+  async questionSocketId() {
+    const answer = await this.question('question/socket/id');
     this.socketID = +answer.payload;
     return this.socketID;
   }
@@ -484,8 +471,8 @@ class Client13jsonRWS extends DataParser {
    * Send question about all socket IDs connected to the server.
    * @returns {Promise<number[]>}
    */
-  async infoSocketList() {
-    const answer = await this.question('info/socket/list');
+  async questionSocketList() {
+    const answer = await this.question('question/socket/list');
     return answer.payload;
   }
 
@@ -493,8 +480,8 @@ class Client13jsonRWS extends DataParser {
    * Send question about all rooms in the server.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async infoRoomList() {
-    const answer = await this.question('info/room/list');
+  async questionRoomList() {
+    const answer = await this.question('question/room/list');
     return answer.payload;
   }
 
@@ -502,8 +489,8 @@ class Client13jsonRWS extends DataParser {
    * Send question about all rooms where the client was entered.
    * @returns {Promise<{name:string, socketIds:number[]}[]>}
    */
-  async infoRoomListmy() {
-    const answer = await this.question(`info/room/listmy`);
+  async questionRoomListmy() {
+    const answer = await this.question(`question/room/listmy`);
     return answer.payload;
   }
 
@@ -513,7 +500,6 @@ class Client13jsonRWS extends DataParser {
   /**
    * Subscribe in the room.
    * @param {string} roomName
-   * @returns {Promise<void>}
    */
   async roomEnter(roomName) {
     const to = 0;
@@ -525,7 +511,6 @@ class Client13jsonRWS extends DataParser {
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
-   * @returns {Promise<void>}
    */
   async roomExit(roomName) {
     const to = 0;
@@ -536,7 +521,6 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Unsubscribe from all rooms.
-   * @returns {Promise<void>}
    */
   async roomExitAll() {
     const to = 0;
@@ -549,7 +533,6 @@ class Client13jsonRWS extends DataParser {
    * Send message to the room.
    * @param {string} roomName
    * @param {any} msg
-   * @returns {Promise<void>}
    */
   async roomSend(roomName, msg) {
     const to = roomName;
@@ -564,7 +547,6 @@ class Client13jsonRWS extends DataParser {
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
-   * @returns {void}
    */
   async setNick(nickname) {
     const to = 0;
@@ -578,7 +560,6 @@ class Client13jsonRWS extends DataParser {
    * Send route command.
    * @param {string} uri - route URI, for example /shop/product/55
    * @param {any} body - body
-   * @returns {void}
    */
   async route(uri, body) {
     const to = 0;
@@ -593,7 +574,7 @@ class Client13jsonRWS extends DataParser {
   /*********** LISTENERS ************/
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error',  'route'
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route'
    * @param {Function} listener - callback function
    */
   on(eventName, listener) {
@@ -602,11 +583,20 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error' (error in the received message, usually jsonRWS errors),  'route'
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error' (error in the received message, usually jsonRWS errors), 'question', 'route'
    * @param {Function} listener - callback function
    */
   once(eventName, listener) {
     return this.eventEmitter.once(eventName, listener);
+  }
+
+  /**
+   * Wrapper around the eventEmitter
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route'
+   * @param {Function} listener - callback function
+   */
+  off(eventName, listener) {
+    return this.eventEmitter.off(eventName, listener);
   }
 
 
@@ -616,7 +606,6 @@ class Client13jsonRWS extends DataParser {
   /******* PRIVATES ********/
   /**
    * Debugger. Use it as this.debugger(var1, var2, var3)
-   * @returns {void}
    */
   debugger(...textParts) {
     const text = textParts.join(' ');

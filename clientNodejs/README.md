@@ -9,18 +9,18 @@ npm install --save regoch-websocket
 ```
 
 ## Website
-[www.regoch.org](http://www.regoch.org/websocket-client-nodejs)
+Documentation at [www.regoch.org](http://www.regoch.org/websocket/clients/nodejs)
 
 
 ## Websocket Client Features
-- websocket version: **13**
-- subprotocol: **[jsonRWS](http://www.regoch.org/websocket-protocols/jsonRWS)**
-- small compiled file size
-- chat rooms
-- PING & PONG
-- **no npm dependencies**
-- powerful API
-- possible RxJS integration
+- RFC6455, websocket v.13
+- supported subprotocols: jsonRWS, raw
+- ping & pong
+- questions - send request to server and receive response (simmilar to HTTP request but on the websocket TCP level)
+- rooms - send group message to a subscribed clients
+- small file size, minified (*~7.5kB only*)
+- powerful API which saves your development time
+- easy integration with RxJS
 
 
 ## Development
@@ -72,10 +72,7 @@ class TestClient extends Client13jsonRWS {
   }
 }
 
-
-
 const main = async () => {
-  
   // connect to websocket server
   const wcOpts = {
     wsURL: 'ws://localhost:3211?authkey=TRTmrt',
@@ -87,20 +84,17 @@ const main = async () => {
   };
   const testClient = new TestClient(wcOpts);
   const socket = await testClient.connect();
-
   console.log('---SOCKET---');
   console.log('readyState::', socket.readyState);
   console.log('writable::', socket.writable);
   console.log('readable::', socket.readable);
-
 };
 
 main();
-
 ```
 
 
-## subprotocol "jsonRWS"
+## Subprotocol "jsonRWS"
 *Subprotocol description:*
 The subprotocol is created for communication between websocket server and client.
 
