@@ -112,7 +112,7 @@ class Client13jsonRWS {
 
 
 
-  /************* RECEIVER ************/
+  /************* RECEIVERS ************/
   /**
    * Receive the message as buffer and convert it in the appropriate subprotocol format.
    * If toEmit is true push it to eventEmitter as 'message' event.
@@ -151,69 +151,7 @@ class Client13jsonRWS {
   }
 
 
-  /**
-   * Send question and expect the answer.
-   * @param {string} cmd - command
-   * @returns {Promise<object>}
-   */
-  question(cmd) {
-    // send the question
-    const to = this.socketID;
-    const payload = undefined;
-    this.carryOut(to, cmd, payload);
-
-    // receive the answer
-    return new Promise(async (resolve, reject) => {
-      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
-      await helper.sleep(this.wcOpts.questionTimeout);
-      reject(new Error(`No answer for the question: ${cmd}`));
-    });
-  }
-
-
-  /**
-   * Send question about my socket ID.
-   * @returns {Promise<number>}
-   */
-  async questionSocketId() {
-    const answer = await this.question('question/socket/id');
-    this.socketID = +answer.payload;
-    return this.socketID;
-  }
-
-  /**
-   * Send question about all socket IDs connected to the server.
-   * @returns {Promise<number[]>}
-   */
-  async questionSocketList() {
-    const answer = await this.question('question/socket/list');
-    return answer.payload;
-  }
-
-  /**
-   * Send question about all rooms in the server.
-   * @returns {Promise<{name:string, socketIds:number[]}[]>}
-   */
-  async questionRoomList() {
-    const answer = await this.question('question/room/list');
-    return answer.payload;
-  }
-
-  /**
-   * Send question about all rooms where the client was entered.
-   * @returns {Promise<{name:string, socketIds:number[]}[]>}
-   */
-  async questionRoomListmy() {
-    const answer = await this.question(`question/room/listmy`);
-    return answer.payload;
-  }
-
-
-
-
-
-
-  /************* SEND MESSAGE TO OTHER CLIENTS ************/
+  /************* SENDERS ************/
   /**
    * Send message to the websocket server if the connection is not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState).
    * @param {number|number[]} to - final destination: 210201164339351900
@@ -286,7 +224,70 @@ class Client13jsonRWS {
 
 
 
-  /************* ROOM ************/
+  /******************************* QUESTIONS ******************************/
+  /*** Send a question to the websocket server and wait for the answer. ***/
+
+  /**
+   * Send question and expect the answer.
+   * @param {string} cmd - command
+   * @returns {Promise<object>}
+   */
+  question(cmd) {
+    // send the question
+    const to = this.socketID;
+    const payload = undefined;
+    this.carryOut(to, cmd, payload);
+
+    // receive the answer
+    return new Promise(async (resolve, reject) => {
+      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
+      await helper.sleep(this.wcOpts.questionTimeout);
+      reject(new Error(`No answer for the question: ${cmd}`));
+    });
+  }
+
+
+  /**
+   * Send question about my socket ID.
+   * @returns {Promise<number>}
+   */
+  async questionSocketId() {
+    const answer = await this.question('question/socket/id');
+    this.socketID = +answer.payload;
+    return this.socketID;
+  }
+
+  /**
+   * Send question about all socket IDs connected to the server.
+   * @returns {Promise<number[]>}
+   */
+  async questionSocketList() {
+    const answer = await this.question('question/socket/list');
+    return answer.payload;
+  }
+
+  /**
+   * Send question about all rooms in the server.
+   * @returns {Promise<{name:string, socketIds:number[]}[]>}
+   */
+  async questionRoomList() {
+    const answer = await this.question('question/room/list');
+    return answer.payload;
+  }
+
+  /**
+   * Send question about all rooms where the client was entered.
+   * @returns {Promise<{name:string, socketIds:number[]}[]>}
+   */
+  async questionRoomListmy() {
+    const answer = await this.question(`question/room/listmy`);
+    return answer.payload;
+  }
+
+
+
+
+  /************* ROOMS ************/
   /**
    * Subscribe in the room.
    * @param {string} roomName
@@ -334,7 +335,7 @@ class Client13jsonRWS {
 
 
 
-  /********* SEND MESSAGE (COMMAND) TO SERVER *********/
+  /********* MISC *********/
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
@@ -396,7 +397,7 @@ class Client13jsonRWS {
 
 
 
-  /*********** MISC ************/
+  /******* OTHER ********/
   /**
    * Debugger. Use it as this.debug(var1, var2, var3)
    */

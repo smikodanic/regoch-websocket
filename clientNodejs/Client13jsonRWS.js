@@ -249,6 +249,7 @@ class Client13jsonRWS extends DataParser {
   }
 
 
+  /************* RECEIVERS ************/
   /**
    * Receive the message as buffer and convert it in the appropriate subprotocol format.
    * If toEmit is true push it to eventEmitter as 'message' event.
@@ -274,7 +275,7 @@ class Client13jsonRWS extends DataParser {
            * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
            */
           const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
-          if (!delimiter_reg.test(msgSTR)) { return; }
+          if (!delimiter_reg.test(msgSTR)) { throw new Error(`Subprotocol "${subprotocol}" delimiter ${this.subprotocolLib.delimiter} not found in the received message.`); }
 
           msg = this.subprotocolLib.incoming(msgSTR);
         }
@@ -317,7 +318,7 @@ class Client13jsonRWS extends DataParser {
   }
 
 
-  /************* SEND MESSAGE TO SERVER ************/
+  /************* SENDERS ************/
   /**
    * Send message to the websocket server after the message is processed by subprotocol and DataParser.
    * @param {number|number[]} to - final destination: 210201164339351900
@@ -496,7 +497,7 @@ class Client13jsonRWS extends DataParser {
 
 
 
-  /************* ROOM ************/
+  /************* ROOMS ************/
   /**
    * Subscribe in the room.
    * @param {string} roomName
@@ -603,7 +604,7 @@ class Client13jsonRWS extends DataParser {
 
 
 
-  /******* PRIVATES ********/
+  /******* OTHER ********/
   /**
    * Debugger. Use it as this.debugger(var1, var2, var3)
    */
