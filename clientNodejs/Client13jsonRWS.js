@@ -52,7 +52,11 @@ class Client13jsonRWS extends DataParser {
     const urlObj  = new urlNode.URL(httpURL);
     const hostname = urlObj.hostname;
     const port = urlObj.port;
-    const path = !!urlObj.search ? urlObj.pathname + urlObj.search : urlObj.pathname;
+    let path = !!urlObj.search ? urlObj.pathname + urlObj.search : urlObj.pathname; // /?authkey=TRTmrt
+
+    this.socketID = helper.generateID();
+    if (/\?[a-zA-Z0-9]/.test(path)) { path += `&socketID=${this.socketID}`;}
+    else { path += `socketID=${this.socketID}`;}
 
     // create hash
     const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'; // Globally Unique Identifier (GUID)
@@ -225,7 +229,7 @@ class Client13jsonRWS extends DataParser {
       try {
         this.socket = socket;
         handshake.forClient(this.resHeaders, this.wsKey, this.wcOpts.subprotocols);
-        this.socketID = this.resHeaders['sec-websocket-socketid'];
+        // this.socketID = this.resHeaders['sec-websocket-socketid'];
 
         const subprotocol_header = this.resHeaders['sec-websocket-protocol']; // subprotocol supported by the server
         if (subprotocol_header === 'raw') { this.subprotocolLib = raw; }
@@ -233,10 +237,10 @@ class Client13jsonRWS extends DataParser {
         else { this.subprotocolLib = raw; }
 
         console.log(`
-        socketID: ${this.socketID},
-        subprotocol(handshaked): "${subprotocol_header}",
-        timeout(inactivity): ${this.resHeaders['sec-websocket-timeout']}ms,
-        client(IP:PORT): ${socket.localAddress}:${socket.localPort} --> tcpdump -i any port ${socket.localPort}
+  - socketID: ${this.socketID},
+  - subprotocol(handshaked): "${subprotocol_header}"
+  - timeout(inactivity): ${this.resHeaders['sec-websocket-timeout']}ms
+  - client(IP:PORT): ${socket.localAddress}:${socket.localPort} --> tcpdump -i any port ${socket.localPort}
         `.cliBoja('blue'));
 
 

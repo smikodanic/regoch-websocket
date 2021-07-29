@@ -42,8 +42,16 @@ class SocketExtension {
   extension() {
     this.socket.extension = {};
 
+    // handle URL query string
+    this.socket.extension.urlQuery = {}; // {authkey: 'TRTmrt', socketID: '210729152147533020'}
+    const urlObj = new URL('http://localhost' + this.url);
+    for(const key of urlObj.searchParams.keys()) {
+      this.socket.extension.urlQuery[key] = urlObj.searchParams.get(key);
+    }
+
     // properties
-    this.socket.extension.id = helper.generateID(); // 201129131151783230
+    // this.socket.extension.id = helper.generateID(); // 201129131151783230
+    this.socket.extension.id = +this.socket.extension.urlQuery.socketID; // 201129131151783230
     this.socket.extension.nick = ''; // custom nick name
     this.socket.extension.ip = this.ip; // client IP
     this.socket.extension.port = +this.socket.remotePort; // client port
@@ -53,12 +61,6 @@ class SocketExtension {
     this.socket.extension.authenticated = false; // is the web socket authenticated
     this.socket.extension.url = this.url; // /something?authkey=TRTmrt
     this.socket.extension.origin = this.origin;
-
-    this.socket.extension.urlQuery = {}; // {authkey: 'TRTmrt'}
-    const urlObj = new URL('http://localhost' + this.url);
-    for(const key of urlObj.searchParams.keys()) {
-      this.socket.extension.urlQuery[key] = urlObj.searchParams.get(key);
-    }
 
 
     // methods

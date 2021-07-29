@@ -30,7 +30,11 @@ class Client13jsonRWS {
    * @returns {Promise<WebSocket>}
    */
   connect() {
-    const wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
+    this.socketID = helper.generateID();
+    let wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
+    if (/\?[a-zA-Z0-9]/.test(wsURL)) { wsURL += `&socketID=${this.socketID}`;}
+    else { wsURL += `socketID=${this.socketID}`;}
+
     this.wsocket = new WebSocket(wsURL, this.wcOpts.subprotocols);
 
     this.onEvents();
@@ -83,8 +87,9 @@ class Client13jsonRWS {
    */
   onEvents() {
     this.wsocket.onopen = async (openEvt) => {
+      console.log(`WS Connection opened -- socketID: ${this.socketID}, subprotocol(handshaked): "${this.wsocket.protocol}"`);
+
       this.onMessage();
-      console.log('WS Connection opened');
 
       this.attempt = 1;
 
@@ -93,8 +98,6 @@ class Client13jsonRWS {
       else if (!!this.wsocket && this.wsocket.protocol === 'jsonRWS') { this.subprotocolLib = jsonRWS; }
       else { this.subprotocolLib = raw; }
 
-      this.socketID = await this.questionSocketId();
-      console.log(`socketID: ${this.socketID}, subprotocol(handshaked): "${this.wsocket.protocol}"`);
       eventEmitter.emit('connected');
     };
 
@@ -124,7 +127,7 @@ class Client13jsonRWS {
     this.wsocket.addEventListener('message', event => {
       try {
         const msgSTR = event.data;
-        this.debugger('Received msgSTR::', msgSTR);
+        this.debugger('Received::', msgSTR);
 
         /**
            * Test if the message contains the delimiter.
