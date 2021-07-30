@@ -2,7 +2,8 @@
  * An example with the built-in HTTP server.
  * Use it for the library developemnt.
  */
-const { RWServer, RWHttpServer } = require('../../index.js');
+const { RWServer, RWHttpServer, lib } = require('../../index.js');
+const helper = lib.helper;
 
 const Router = require('regoch-router');
 const router = new Router({debug: false});
@@ -51,6 +52,7 @@ rws.on('connection', async socket => {
   const authkey = 'TRTmrt'; // can be fetched from the database, usually 'users' table
   socket.extension.authenticate(authkey); // authenticate the socket: compare authkey with the sent authkey in the client request URL ws://localhost:3211/something?authkey=TRTmrt
 
+  helper.sleep(1300);
 
   /* socketStorage test */
   // await new Promise(resolve => setTimeout(resolve, 5500));

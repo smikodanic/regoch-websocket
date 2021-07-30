@@ -184,7 +184,7 @@ class Client13jsonRWS extends DataParser {
         delete this.clientRequest;
         delete this.socket;
         delete this.socketID;
-        this.reconnect();
+        if (hadError) { this.reconnect(); }
       });
 
 

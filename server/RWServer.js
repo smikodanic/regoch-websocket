@@ -108,8 +108,6 @@ class RWServer {
         if (!wsKey) { throw new Error('Client didn\'t send "Sec-Websocket-Key" header.'); }
         if (wsVersion !== version) { throw new Error(`Websocket version ${wsVersion} is not supported. Valid version: ${version}.`); }
         if (!!wsProtocols && !wsProtocols.includes(subprotocol)) { throw new Error(`Client requested "${wsProtocols}" subprotocols but server supports "${subprotocol}".`); }
-        this.limitConnections(socketStorage, ip);
-        await helper.sleep(tightening);
 
 
         /********** SOCKET EXTENSION ***********/
@@ -128,6 +126,9 @@ class RWServer {
         await helper.sleep(tightening);
         if (!socket.extension.authenticated) { throw new Error(`Socket is not authenticated! Client IP: ${ip} , userAgent: ${userAgent}`); } // do not execute further code if the socket is not autheticated
 
+        /******* LIMIT NUMBER OF CLIENT CONNECTIONS *********/
+        await this.limitConnections(socketStorage, ip);
+        await helper.sleep(tightening);
 
         /********** DATA TRANSFER ***********/
         dataTransfer.carryIn(socket);
@@ -168,15 +169,17 @@ class RWServer {
    * @param {SocketStorage} socketStorage - socketStorage instance
    * @param {string} ip - the client IP address
    */
-  limitConnections(socketStorage, ip) {
-    const conns = socketStorage.count() + 1; // total number of sockets
-    const ip_conns = socketStorage.find({ip}).length + 1; // number of connections from an IP
+  async limitConnections(socketStorage, ip) {
+    const conns = await socketStorage.count(); // total number of sockets
+
+    const foundSocketsByIP = await socketStorage.find({ip});
+    const ip_conns = foundSocketsByIP.length; // number of connections from an IP
 
     // limit total number of connections
     if (conns > this.wsOpts.maxConns) { throw new Error(`Total connections: ${conns}  Max allowed: ${this.wsOpts.maxConns}`); }
 
     // limit number of connection from the same IP
-    if (ip_conns > this.wsOpts.maxIPConns ) { throw new Error(`Total connections from IP ${ip}: ${ip_conns}  Max allowed: ${this.wsOpts.maxIPConns}`);}
+    if (ip_conns > this.wsOpts.maxIPConns ) { throw new Error(`Total connections from IP ${ip} is ${ip_conns}.  Max allowed: ${this.wsOpts.maxIPConns}`);}
   }
 
 
