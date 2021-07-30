@@ -23,12 +23,12 @@ npm install --save regoch-websocket
 
 
 ## Website
-[www.regoch.org](http://www.regoch.org/websocket)
+[www.regoch.org](http://www.regoch.org)
 
 
 ## Websocket Server Features
 - websocket version: **13**
-- subprotocols: **[jsonRWS](http://www.regoch.org/websocket-protocol-jsonRWS)**, raw
+- subprotocols: jsonRWS, raw
 - chat,  rooms
 - PING & PONG
 - small file size
