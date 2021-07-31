@@ -184,7 +184,8 @@ class Client13jsonRWS extends DataParser {
         delete this.clientRequest;
         delete this.socket;
         delete this.socketID;
-        if (hadError) { this.reconnect(); }
+        // if (hadError) { this.reconnect(); } // prevent reconnection when socket is destroyed by the server
+        this.reconnect();
       });
 
 
@@ -286,6 +287,7 @@ class Client13jsonRWS extends DataParser {
 
         // dispatch
         if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { this.eventEmitter.emit('route', msg, msgSTR, msgBUF); }
+        else if (msg.cmd === 'error' && subprotocol === 'jsonRWS') { this.blockReconnect(); this.eventEmitter.emit('error', msg, msgSTR, msgBUF); }
         else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { this.eventEmitter.emit('question', msg, msgSTR, msgBUF); }
         else { this.eventEmitter.emit('message', msg, msgSTR, msgBUF); }
 
@@ -578,8 +580,9 @@ class Client13jsonRWS extends DataParser {
 
   /*********** LISTENERS ************/
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route'
+   * Listen the event.
+   * * NOTICE: event 'message-error' - error in the received message, usually when message doen't conform the jsonRWS subprotocol
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'error'
    * @param {Function} listener - callback function
    */
   on(eventName, listener) {
@@ -587,8 +590,8 @@ class Client13jsonRWS extends DataParser {
   }
 
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error' (error in the received message, usually jsonRWS errors), 'question', 'route'
+   * Listen the event only one time.
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'error'
    * @param {Function} listener - callback function
    */
   once(eventName, listener) {
@@ -596,8 +599,8 @@ class Client13jsonRWS extends DataParser {
   }
 
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route'
+   * Stop listening the event.
+   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'error'
    * @param {Function} listener - callback function
    */
   off(eventName, listener) {

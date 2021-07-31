@@ -77,7 +77,15 @@ testClient.connect();
 
 
 testClient.on('message', (msg, msgSTR, msgBUF) => {
-  console.log(`Received(${lib.getMessageSize(msg)} bytes): ${msg}`);
+  console.log(`Received message (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
+});
+
+testClient.on('message-error', (msg, msgSTR, msgBUF) => {
+  console.log(`Received message-error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
+});
+
+testClient.on('error', (msg, msgSTR, msgBUF) => {
+  console.log(`Received error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
 });
 
 setTimeout(async () => {

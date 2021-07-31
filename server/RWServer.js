@@ -21,7 +21,7 @@ class RWServer {
         timeout: 5*60*1000, // close socket after ms inactivity. If 0 never close. Default: 5min.
         allowHalfOpen: false, // if false close socket if it's readyState is writeOnly or readOnly. When NginX timeout socket on the client side [Client -X- NginX --- WSServer(NodeJS)]
         maxConns: 10000, // limit connections to the server
-        maxIPConns: 1, // limit connections from the same IP address. If 0 infinite
+        maxIPConns: 3, // limit connections from the same IP address. If 0 infinite
         storage: 'memory', // socket storage type
         subprotocol: 'jsonRWS', // protocol used in the server
         tightening: 400, // delays in the code execution
@@ -138,7 +138,7 @@ class RWServer {
         console.log(err.stack.cliBoja('red'));
         if (!!socket) {
           this.dataTransfer.sendError(err, socket);
-          setTimeout(() => { socket.destroy(); }, 2100);
+          setTimeout(() => { socket.destroy(); }, 3400);
         }
       }
 

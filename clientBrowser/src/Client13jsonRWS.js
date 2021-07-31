@@ -142,6 +142,7 @@ class Client13jsonRWS {
         // dispatch
         const detail = {msg, msgSTR};
         if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { eventEmitter.emit('route', detail); }
+        else if (msg.cmd === 'error' && subprotocol === 'jsonRWS') { this.blockReconnect(); eventEmitter.emit('error', detail); }
         else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { eventEmitter.emit('question', detail); }
         else { eventEmitter.emit('message', detail); }
 
@@ -367,8 +368,8 @@ class Client13jsonRWS {
 
   /*********** LISTENERS ************/
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * Listen the event.
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
@@ -378,8 +379,8 @@ class Client13jsonRWS {
   }
 
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * Listen the event only one time.
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
@@ -389,8 +390,8 @@ class Client13jsonRWS {
   }
 
   /**
-   * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question'
+   * Stop listening the event.
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   off(eventName, listener) {

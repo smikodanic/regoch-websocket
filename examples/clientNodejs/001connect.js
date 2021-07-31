@@ -29,7 +29,14 @@ const main = async () => {
   console.log('writable::', socket.writable);
   console.log('readable::', socket.readable);
 
-  testClient.on('closed-by-server', msgSTR => { console.log('received::', msgSTR); });
+  testClient.on('closed-by-server', msgSTR => {
+    console.log('Received closed-by-server::', msgSTR);
+  });
+
+  testClient.on('error', (msg, msgSTR, msgBUF) => {
+    console.log(`Received error:`, msgSTR);
+  });
+
 };
 
 main();

@@ -27,7 +27,7 @@ setTimeout(() => {
 const wsOpts = {
   timeout: 5*60*1000,
   maxConns: 5,
-  maxIPConns: 3,
+  maxIPConns: 1,
   storage: 'memory',
   subprotocol: 'jsonRWS',
   tightening: 100,
