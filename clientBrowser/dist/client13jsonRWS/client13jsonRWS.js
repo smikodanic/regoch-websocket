@@ -136,7 +136,7 @@ class Client13jsonRWS {
            * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
            */
         const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
-        if (!delimiter_reg.test(msgSTR)) { throw new Error(`Subprotocol "${subprotocol}" delimiter ${this.subprotocolLib.delimiter} not found in the received message.`); }
+        if (!delimiter_reg.test(msgSTR)) { return; }
 
         const msg = this.subprotocolLib.incoming(msgSTR);
 
