@@ -33,8 +33,8 @@ const main = async () => {
     console.log('Received closed-by-server::', msgSTR);
   });
 
-  testClient.on('error', (msg, msgSTR, msgBUF) => {
-    console.log(`Received error:`, msgSTR);
+  testClient.on('server-error', (msg, msgSTR, msgBUF) => {
+    console.log(`Received server-error:`, msgSTR);
   });
 
 };

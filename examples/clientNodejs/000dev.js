@@ -84,8 +84,8 @@ testClient.on('message-error', (msg, msgSTR, msgBUF) => {
   console.log(`Received message-error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
 });
 
-testClient.on('error', (msg, msgSTR, msgBUF) => {
-  console.log(`Received error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
+testClient.on('server-error', (msg, msgSTR, msgBUF) => {
+  console.log(`Received server-error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
 });
 
 setTimeout(async () => {

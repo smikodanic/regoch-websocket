@@ -211,7 +211,7 @@ class DataTransfer {
       id: helper.generateID(),
       from: 0,
       to,
-      cmd: 'error',
+      cmd: 'server-error',
       payload: err.message
     };
     await this.carryOut(msgObj, socket);

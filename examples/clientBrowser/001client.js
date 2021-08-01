@@ -172,13 +172,17 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
   messageReceiver() {
     this.on('message', (msg, msgSTR) => {
-      console.log('msg (message after subprotocol)::', msg); // message after subprotocol
-      console.log('msgSTR (message string)::', msgSTR); // received message
+      console.log('Message msg (message after subprotocol):::', msg); // message after subprotocol
+      console.log('Message msgSTR (message string):::', msgSTR); // received message
       $('#incomingMessage').text(msg.payload);
     });
 
-    this.on('message-error',err => {
-      console.error(err);
+    this.on('message-error', err => {
+      console.error('Message error:::', err);
+    });
+
+    this.on('server-error', (msg, msgSTR) => {
+      console.error('Server error:::', msgSTR);
     });
   }
 
