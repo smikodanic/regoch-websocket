@@ -80,8 +80,8 @@ testClient.on('message', (msg, msgSTR, msgBUF) => {
   console.log(`Received message (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
 });
 
-testClient.on('message-error', (msg, msgSTR, msgBUF) => {
-  console.log(`Received message-error (${lib.getMessageSize(msgSTR)} bytes):`, msgSTR);
+testClient.on('message-error', err => {
+  console.log(`Received message-error:`, err);
 });
 
 testClient.on('server-error', (msg, msgSTR, msgBUF) => {

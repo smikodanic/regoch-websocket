@@ -186,7 +186,7 @@ class RWServer {
 
   /**
    * Wrapper around the eventEmitter
-   * @param {string} eventName - event name: 'connection', 'message', 'route'
+   * @param {string} eventName - event name: 'connection', 'message', 'message-error', 'route'
    * @param {Function} listener - callback function
    */
   on(eventName, listener) {

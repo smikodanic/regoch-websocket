@@ -74,6 +74,11 @@ rws.on('message', (msg, msgSTR, msgBUF, socket) => {
 });
 
 
+rws.on('message-error', err => {
+  console.log(`Received message-error:`, err);
+});
+
+
 
 /*** route stream ***/
 rws.on('route', (msgObj, socket, dataTransfer, socketStorage, eventEmitter) => { // msgObj:: {id, from, to, cmd, payload: {uri, body}}
