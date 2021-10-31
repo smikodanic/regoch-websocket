@@ -18,7 +18,7 @@ class RWServer {
     // define default websocket options for the WS Server
     if (!wsOpts) {
       wsOpts = {
-        timeout: 5*60*1000, // close socket after ms inactivity. If 0 never close. Default: 5min.
+        timeout: 5 * 60 * 1000, // close socket after ms inactivity. If 0 never close. Default: 5min.
         allowHalfOpen: false, // if false close socket if it's readyState is writeOnly or readOnly. When NginX timeout socket on the client side [Client -X- NginX --- WSServer(NodeJS)]
         maxConns: 10000, // limit connections to the server
         maxIPConns: 3, // limit connections from the same IP address. If 0 infinite
@@ -29,7 +29,7 @@ class RWServer {
         debug: false // debug incoming and outgoing messages
       };
     } else {
-      if (!wsOpts.timeout) { wsOpts.timeout = 5*60*1000; }
+      if (!wsOpts.timeout) { wsOpts.timeout = 5 * 60 * 1000; }
       if (!wsOpts.allowHalfOpen) { wsOpts.allowHalfOpen = false; }
       if (wsOpts.maxConns < wsOpts.maxIPConns) { throw new Error('Option "maxConns" must be greater then "maxIPConns".'); }
       if (wsOpts.maxConns <= 0 || wsOpts.maxIPConns <= 0) { throw new Error('Option "maxConns" && "maxIPConns" must be greater then 0.'); }
@@ -172,18 +172,19 @@ class RWServer {
   async limitConnections(socketStorage, ip) {
     const conns = await socketStorage.count(); // total number of sockets
 
-    const foundSocketsByIP = await socketStorage.find({ip});
+    const foundSocketsByIP = await socketStorage.find({ ip });
     const ip_conns = foundSocketsByIP.length; // number of connections from an IP
 
     // limit total number of connections
     if (conns > this.wsOpts.maxConns) { throw new Error(`Total connections: ${conns}  Max allowed: ${this.wsOpts.maxConns}`); }
 
     // limit number of connection from the same IP
-    if (ip_conns > this.wsOpts.maxIPConns ) { throw new Error(`Total connections from IP ${ip} is ${ip_conns}.  Max allowed: ${this.wsOpts.maxIPConns}`);}
+    if (ip_conns > this.wsOpts.maxIPConns) { throw new Error(`Total connections from IP ${ip} is ${ip_conns}.  Max allowed: ${this.wsOpts.maxIPConns}`); }
   }
 
 
 
+  /*** Event Listeners ***/
   /**
    * Wrapper around the eventEmitter
    * @param {string} eventName - event name: 'connection', 'message', 'message-error', 'route'
@@ -192,6 +193,26 @@ class RWServer {
   on(eventName, listener) {
     return this.dataTransfer.eventEmitter.on(eventName, listener);
   }
+
+  /**
+   * Listen the event only one time.
+   * @param {string} eventName - event name: 'connection', 'message', 'message-error', 'route'
+   * @param {Function} listener - callback function
+   */
+  once(eventName, listener) {
+    return this.dataTransfer.eventEmitter.once(eventName, listener);
+  }
+
+  /**
+   * Stop listening the event.
+   * @param {string} eventName - event name: 'connection', 'message', 'message-error', 'route'
+   * @param {Function} listener - callback function
+   */
+  off(eventName, listener) {
+    return this.dataTransfer.eventEmitter.off(eventName, listener);
+  }
+
+
 
 
 }

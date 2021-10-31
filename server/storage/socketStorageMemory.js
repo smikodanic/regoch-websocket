@@ -68,6 +68,23 @@ class SocketStorageMemory {
 
 
   /**
+   * Remove all sockets by the _searchLogic query.
+   * 1. Kill the web socket. Ensures that no more I/O activity happens on this socket
+   * 2. Remove socket from sockets array.
+   * 3. Remove socket from the rooms.
+   * @param query {Object} - search query object {id, ip, port, time, ... }
+   * @returns {number} - count how many sockets were removed
+   */
+  removeByQuery(query) {
+    const sockets = this.find(query) || [];
+    for (const socket of sockets) {
+      this.remove(socket);
+    }
+    return sockets.length;
+  }
+
+
+  /**
    * Get array of all socket IDs. Because socket object is very big and hard to debug.
    * @param {string} sort - asc | desc -- sort IDs ascending or descending
    * @returns {number[]} - array of numbers
@@ -134,7 +151,7 @@ class SocketStorageMemory {
    * @returns {void}
    */
   async setNick(socket, nickname) {
-    const socketFound = await global.rws.sockets.find(socket => this._searchLogic(socket, {nickname})); // check if nickname already exists
+    const socketFound = await global.rws.sockets.find(socket => this._searchLogic(socket, { nickname })); // check if nickname already exists
     if (!!socketFound) { throw new Error(`The nickname "${nickname}" already exists.`); }
     socket.extension.nickname = nickname;
   }
