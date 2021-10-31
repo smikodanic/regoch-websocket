@@ -60,7 +60,7 @@ class SocketStorageMemory {
    * @param {Socket} socket - net socket https://nodejs.org/api/net.html#net_class_net_socket properties + "extension" propery added by SocketExtension.js
    * @returns {void}
    */
-  remove(socket) {
+  async remove(socket) {
     socket.destroy();
     global.rws.sockets = global.rws.sockets.filter(sock => sock.extension.id !== socket.extension.id);
     this.roomExitAll(socket);
@@ -75,10 +75,11 @@ class SocketStorageMemory {
    * @param query {Object} - search query object {id, ip, port, time, ... }
    * @returns {number} - count how many sockets were removed
    */
-  removeByQuery(query) {
-    const sockets = this.find(query) || [];
+  async removeByQuery(query) {
+    const sockets = await this.find(query) || [];
+    console.log('sockets::', sockets);
     for (const socket of sockets) {
-      this.remove(socket);
+      await this.remove(socket);
     }
     return sockets.length;
   }
@@ -164,6 +165,7 @@ class SocketStorageMemory {
    * https://nodejs.org/api/net.html#net_socket_readystate
    * readyState: opening, open, readOnly, writeOnly
    * @param {number} sec - purge after sec soceonds, if sec=0 then purge once
+   * @returns {void}
    */
   async purge(sec) {
     const sockets = await this.getAll();
