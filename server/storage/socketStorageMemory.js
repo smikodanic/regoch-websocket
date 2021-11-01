@@ -77,7 +77,6 @@ class SocketStorageMemory {
    */
   async removeByQuery(query) {
     const sockets = await this.find(query) || [];
-    console.log('sockets::', sockets);
     for (const socket of sockets) {
       await this.remove(socket);
     }

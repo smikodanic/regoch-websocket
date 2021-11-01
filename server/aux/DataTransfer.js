@@ -36,7 +36,7 @@ class DataTransfer {
     let msgBUFarr = [];
 
     socket.on('data', async msgBUFchunk => {
-      await new Promise(r => setTimeout(r, )); // slow down very fast incoming data streams
+      // await new Promise(r => setTimeout(r, )); // slow down very fast incoming data streams
 
       try {
         // console.log('msgBUFchunk::', msgBUFchunk.length, msgBUFchunk.toString('hex').match(/../g).join(' '));
@@ -70,7 +70,7 @@ class DataTransfer {
         msgSTR = '';
         msg = null;
 
-      } catch(err) {
+      } catch (err) {
         const socketID = !!socket && !!socket.extension ? socket.extension.id : '';
         console.log(`DataTransfer.carryIn:: socketID: ${socketID}, WARNING: ${err.message}`.cliBoja('yellow'));
         this.eventEmitter.emit('message-error', err);
@@ -120,7 +120,7 @@ class DataTransfer {
       if (!!socket && socket.readable) { socket.write(msgBUF); } // send buffer message to the client
       else { throw new Error(`Socket is not defined or not writable ! msg: ${msgSTR}`); }
       await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
-    } catch(err) {
+    } catch (err) {
       const socketID = !!socket && !!socket.extension ? socket.extension.id : 'BAD SOCKET';
       console.log(`DataTransfer.carryOut:: socketID: ${socketID}, WARNING: ${err.message}`.cliBoja('yellow'));
       // socket.destroy();
@@ -160,7 +160,7 @@ class DataTransfer {
    */
   async broadcast(msg, socketSender) {
     const iD = +socketSender.extension.id;
-    const sockets = await this.socketStorage.find({id: {$ne: iD}});
+    const sockets = await this.socketStorage.find({ id: { $ne: iD } });
     for (const socket of sockets) {
       await this.carryOut(msg, socket);
     }
@@ -191,7 +191,7 @@ class DataTransfer {
     const socketSenderID = +socketSender.extension.id; // sender socket id
     const room = await this.socketStorage.roomFindOne(roomName); // {name:string, socketIds:number[]}
     if (!!room) {
-      const sockets = await this.socketStorage.find({id: {$in: room.socketIds}});
+      const sockets = await this.socketStorage.find({ id: { $in: room.socketIds } });
       for (const socket of sockets) {
         if (!!socket && socket.extension.id !== socketSenderID) { await this.carryOut(msg, socket); }
       }

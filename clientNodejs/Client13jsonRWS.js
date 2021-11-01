@@ -49,14 +49,14 @@ class Client13jsonRWS extends DataParser {
     // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
     const wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
     const httpURL = wsURL.replace('wss://', 'https://').replace('ws://', 'http://');
-    const urlObj  = new urlNode.URL(httpURL);
+    const urlObj = new urlNode.URL(httpURL);
     const hostname = urlObj.hostname;
     const port = urlObj.port;
     let path = !!urlObj.search ? urlObj.pathname + urlObj.search : urlObj.pathname; // /?authkey=TRTmrt
 
     this.socketID = helper.generateID();
-    if (/\?[a-zA-Z0-9]/.test(path)) { path += `&socketID=${this.socketID}`;}
-    else { path += `socketID=${this.socketID}`;}
+    if (/\?[a-zA-Z0-9]/.test(path)) { path += `&socketID=${this.socketID}`; }
+    else { path += `socketID=${this.socketID}`; }
 
     // create hash
     const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'; // Globally Unique Identifier (GUID)
@@ -335,7 +335,7 @@ class Client13jsonRWS extends DataParser {
     const id = helper.generateID(); // the message ID
     const from = +this.socketID; // the sender ID
     if (!to) { to = 0; } // server ID is 0
-    const msg = {id, from, to, cmd, payload};
+    const msg = { id, from, to, cmd, payload };
     const msgSTR = jsonRWS.outgoing(msg);
 
     // the message must be defined and client must be connected to the server
@@ -571,7 +571,7 @@ class Client13jsonRWS extends DataParser {
   async route(uri, body) {
     const to = 0;
     const cmd = 'route';
-    const payload = {uri, body};
+    const payload = { uri, body };
     await this.carryOut(to, cmd, payload);
   }
 
