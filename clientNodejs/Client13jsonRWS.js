@@ -17,10 +17,10 @@ new StringExt();
 class Client13jsonRWS extends DataParser {
 
   /**
-   * @param {{wsURL:string, questionTimeout:number, reconnectAttempts:number, reconnectDelay:number, subprotocols:string[], debug:boolean}} wcOpts - websocket client options
+   * @param {{wsURL:string, questionTimeout:number, reconnectAttempts:number, reconnectDelay:number, subprotocols:string[], debug:boolean, debug_DataParser:boolean}} wcOpts - websocket client options
    */
   constructor(wcOpts) {
-    super(wcOpts.debug);
+    super(wcOpts.debug_DataParser);
 
     this.wcOpts = wcOpts; // websocket client options
     this.socket; // TCP Socket https://nodejs.org/api/net.html#net_class_net_socket
@@ -314,11 +314,11 @@ class Client13jsonRWS extends DataParser {
       console.log('Opcode 0x8: Server closed the websocket connection'.cliBoja('yellow'));
       this.eventEmitter.emit('closed-by-server', msgSTR);
     } else if (msgSTR === 'OPCODE 0x9 PING') {
-      if (this.wcOpts.debug) { console.log('Opcode 0x9: PING received'.cliBoja('yellow')); }
+      this.debugger('Opcode 0x9: PING received');
       this.eventEmitter.emit('ping', msgSTR);
       this.pong(); // send PONG to the server
     } else if (msgSTR === 'OPCODE 0xA PONG') {
-      if (this.wcOpts.debug) { console.log('Opcode 0xA: PONG received'.cliBoja('yellow')); }
+      this.debugger('Opcode 0xA: PONG received');
       this.eventEmitter.emit('pong', msgSTR);
     }
   }
@@ -332,6 +332,24 @@ class Client13jsonRWS extends DataParser {
    * @param {any} payload - message payload
    */
   async carryOut(to, cmd, payload) {
+    // DDoS protection (protect from sending too many messages in short period time)
+    const autodelay = await new Promise((resolve, reject) => {
+      let ms = 0;
+      const startTime = process.hrtime(); // time when event loop tick strted
+      process.nextTick(() => {
+        const diff = process.hrtime(startTime); // the difference between time when event loop tick started and ended
+        const ns = diff[0] * 1e9 + diff[1]; // nanoseconds
+        ms = ns / 1000000; // miliseconds
+        if (ms > 100) { resolve(-1); }
+        if (ms > 10) { resolve(-2); }
+        else { resolve(ms * 1000); }
+      });
+    });
+    this.debugger(`autodelay: ${autodelay}`.cliBoja('yellow'));
+    if (autodelay === -1) { this.debugger(`DDoS attack - disconnect the client`.cliBoja('red')); this.disconnect(); process.exit(); }
+    if (autodelay === -2) { this.debugger(`DDoS attack - block message`.cliBoja('red')); return; }
+    else { await new Promise(r => setTimeout(r, autodelay)); }
+
     const id = helper.generateID(); // the message ID
     const from = +this.socketID; // the sender ID
     if (!to) { to = 0; } // server ID is 0
@@ -354,7 +372,6 @@ class Client13jsonRWS extends DataParser {
    * @param {Buffer} msgBUF - message to server
    */
   async socketWrite(msgBUF) {
-    await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
     if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
       this.socket.write(msgBUF);
     } else {
@@ -618,6 +635,19 @@ class Client13jsonRWS extends DataParser {
   debugger(...textParts) {
     const text = textParts.join(' ');
     if (this.wcOpts.debug) { console.log(text.cliBoja('yellow')); }
+  }
+
+
+
+
+  /**
+   * 1) Automatic delay of too fast websocket messages which can cause to block the NodeJS event loop.
+   * 2) Stop DDoS attacks caused by very fast messages. When the event loop tick duration is >10ms.
+   * @param {string} debugTxt - a text which helps to debug
+   * @returns {boolean} - if false block the message
+   */
+  async _autodelay(debugTxt) {
+
   }
 
 

@@ -25,12 +25,12 @@ const main = async () => {
   const testClient = new TestClient(wcOpts);
   await testClient.connect();
 
-  const n = 500;
+  const n = 100000;
 
   console.log(`Sending ${n} messages...`);
 
   for (let i = 1; i <= n; i++) {
-    await testClient.sendOne(211101133145489020, `#${i} some message`);
+    await testClient.sendOne(211101150044926240, `#${i} some message`);
   }
 };
 

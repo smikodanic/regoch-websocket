@@ -36,7 +36,6 @@ class DataTransfer {
     let msgBUFarr = [];
 
     socket.on('data', async msgBUFchunk => {
-      // await new Promise(r => setTimeout(r, )); // slow down very fast incoming data streams
 
       try {
         // console.log('msgBUFchunk::', msgBUFchunk.length, msgBUFchunk.toString('hex').match(/../g).join(' '));
