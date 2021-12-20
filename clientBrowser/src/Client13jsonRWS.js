@@ -31,8 +31,8 @@ class Client13jsonRWS {
   connect() {
     this.socketID = helper.generateID();
     let wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
-    if (/\?[a-zA-Z0-9]/.test(wsURL)) { wsURL += `&socketID=${this.socketID}`;}
-    else { wsURL += `socketID=${this.socketID}`;}
+    if (/\?[a-zA-Z0-9]/.test(wsURL)) { wsURL += `&socketID=${this.socketID}`; }
+    else { wsURL += `socketID=${this.socketID}`; }
 
     this.wsocket = new WebSocket(wsURL, this.wcOpts.subprotocols);
 
@@ -140,7 +140,7 @@ class Client13jsonRWS {
         const msg = this.subprotocolLib.incoming(msgSTR);
 
         // dispatch
-        const detail = {msg, msgSTR};
+        const detail = { msg, msgSTR };
         if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { eventEmitter.emit('route', detail); }
         else if (msg.cmd === 'server-error' && subprotocol === 'jsonRWS') { this.blockReconnect(); eventEmitter.emit('server-error', detail); }
         else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { eventEmitter.emit('question', detail); }
@@ -165,7 +165,7 @@ class Client13jsonRWS {
     const id = helper.generateID(); // the message ID
     const from = +this.socketID; // the sender ID
     if (!to) { to = 0; } // server ID is 0
-    const msgObj = {id, from, to, cmd, payload};
+    const msgObj = { id, from, to, cmd, payload };
     const msg = jsonRWS.outgoing(msgObj);
     this.debugger('Sent::', msg);
 
@@ -359,7 +359,7 @@ class Client13jsonRWS {
   async route(uri, body) {
     const to = 0;
     const cmd = 'route';
-    const payload = {uri, body};
+    const payload = { uri, body };
     await this.carryOut(to, cmd, payload);
   }
 
@@ -373,9 +373,7 @@ class Client13jsonRWS {
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
-    return eventEmitter.on(eventName, event => {
-      listener.call(null, event.detail.msg, event.detail.msgSTR);
-    });
+    eventEmitter.on(eventName, listener);
   }
 
   /**
@@ -384,9 +382,7 @@ class Client13jsonRWS {
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
-    return eventEmitter.once(eventName, event => {
-      listener.call(null, event.detail.msg, event.detail.msgSTR);
-    });
+    return eventEmitter.once(eventName, listener);
   }
 
   /**
@@ -397,6 +393,15 @@ class Client13jsonRWS {
   off(eventName, listener) {
     return eventEmitter.off(eventName, listener);
   }
+
+  /**
+   * Stop listening all events.
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   */
+  offAll(eventName) {
+    return eventEmitter.offAll(eventName);
+  }
+
 
 
 

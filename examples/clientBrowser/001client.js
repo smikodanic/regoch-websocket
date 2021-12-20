@@ -149,7 +149,7 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
       console.log('route msg::', msg);
 
       // regoch-router transitional varaible trx
-      const router = new window.regochRouter({debug: false});
+      const router = new window.regochRouter({ debug: false });
       const payload = msg.payload; // {uri:string, body?:any}
       router.trx = {
         uri: payload.uri,
@@ -186,6 +186,42 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
     });
   }
 
+
+  /*** test on, once, off, offAll ***/
+  async sendContinuous() {
+    const to = +$('#toID').val();
+    for (let i = 1; i <= 100; i++) {
+      const payload = `${i}. message sent`;
+      await this.sendOne(to, payload);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+
+  testON() {
+    this.msg_listener = (msg, msgSTR) => {
+      $('#receivedMessage').text(msg.payload);
+    };
+    this.on('message', this.msg_listener);
+  }
+
+  testONCE() {
+    this.once('message', (msg, msgSTR) => {
+      $('#receivedMessage').text(msg.payload);
+      console.log('testONCE msgSTR::', msgSTR);
+    });
+  }
+
+  testOFF() {
+    this.off('message', this.msg_listener);
+  }
+
+  testOFFALL() {
+    this.offAll('message');
+  }
+
+
+
+
 }
 
 
@@ -193,7 +229,7 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
 const wcOpts = {
   wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-  questionTimeout: 3*1000, // wait 3secs for answer
+  questionTimeout: 3 * 1000, // wait 3secs for answer
   reconnectAttempts: 5, // try to reconnect 5 times
   reconnectDelay: 3000, // delay between reconnections is 3 seconds
   subprotocols: ['jsonRWS'],

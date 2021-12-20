@@ -21,7 +21,7 @@ const browserifyTask = async () => {
     .bundle()
     .pipe(source('client13jsonRWS.js'))
     .pipe(buffer())
-    .pipe(sourcemaps.init({loadMaps: true}))
+    .pipe(sourcemaps.init({ loadMaps: true }))
     .pipe(minify())
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest('./dist/client13jsonRWS'))
@@ -35,7 +35,7 @@ const browserifyTask = async () => {
 /***** GULP WATCHERS *****/
 gulp.task('watch', () => {
   gulp.watch([
-    './src/*.js'
+    './src/**/*.js'
   ], gulp.series(rimrafTask, browserifyTask));
 });
 

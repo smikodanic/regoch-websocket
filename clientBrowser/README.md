@@ -27,7 +27,7 @@ npm install --save regoch-websocket
 Make changes in the code and run a gulp build:
 ```bash
 npm run inst  # Install required gulp packages needed for the development
-npm run dev   # This command will watch for file "Client13jsonRWS.js" changes and build in /dist/ folder by the gulp and browserify.
+npm run dev   # This command will watch for /src/ file changes and build in /dist/ folder by the gulp and browserify
 ```
 
 
@@ -55,6 +55,8 @@ npm run dev   # This command will watch for file "Client13jsonRWS.js" changes an
 
 - **on(eventName:string, listener:Function)** - listen events: *'connected', 'message', 'route'*
 - **once(eventName:string, listener:Function)** - listen events: *'connected', 'message', 'route'* only once
+- **off(eventName:string, listener:Function)** 
+- **offAll(eventName:string)** 
 
 
 

@@ -32,8 +32,8 @@ class Client13jsonRWS {
   connect() {
     this.socketID = helper.generateID();
     let wsURL = this.wcOpts.wsURL; // websocket URL: ws://localhost:3211/something?authkey=TRTmrt
-    if (/\?[a-zA-Z0-9]/.test(wsURL)) { wsURL += `&socketID=${this.socketID}`;}
-    else { wsURL += `socketID=${this.socketID}`;}
+    if (/\?[a-zA-Z0-9]/.test(wsURL)) { wsURL += `&socketID=${this.socketID}`; }
+    else { wsURL += `socketID=${this.socketID}`; }
 
     this.wsocket = new WebSocket(wsURL, this.wcOpts.subprotocols);
 
@@ -141,7 +141,7 @@ class Client13jsonRWS {
         const msg = this.subprotocolLib.incoming(msgSTR);
 
         // dispatch
-        const detail = {msg, msgSTR};
+        const detail = { msg, msgSTR };
         if (msg.cmd === 'route' && subprotocol === 'jsonRWS') { eventEmitter.emit('route', detail); }
         else if (msg.cmd === 'server-error' && subprotocol === 'jsonRWS') { this.blockReconnect(); eventEmitter.emit('server-error', detail); }
         else if (/^question\//.test(msg.cmd) && subprotocol === 'jsonRWS') { eventEmitter.emit('question', detail); }
@@ -166,7 +166,7 @@ class Client13jsonRWS {
     const id = helper.generateID(); // the message ID
     const from = +this.socketID; // the sender ID
     if (!to) { to = 0; } // server ID is 0
-    const msgObj = {id, from, to, cmd, payload};
+    const msgObj = { id, from, to, cmd, payload };
     const msg = jsonRWS.outgoing(msgObj);
     this.debugger('Sent::', msg);
 
@@ -360,7 +360,7 @@ class Client13jsonRWS {
   async route(uri, body) {
     const to = 0;
     const cmd = 'route';
-    const payload = {uri, body};
+    const payload = { uri, body };
     await this.carryOut(to, cmd, payload);
   }
 
@@ -374,9 +374,7 @@ class Client13jsonRWS {
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
-    return eventEmitter.on(eventName, event => {
-      listener.call(null, event.detail.msg, event.detail.msgSTR);
-    });
+    eventEmitter.on(eventName, listener);
   }
 
   /**
@@ -385,9 +383,7 @@ class Client13jsonRWS {
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
-    return eventEmitter.once(eventName, event => {
-      listener.call(null, event.detail.msg, event.detail.msgSTR);
-    });
+    return eventEmitter.once(eventName, listener);
   }
 
   /**
@@ -398,6 +394,15 @@ class Client13jsonRWS {
   off(eventName, listener) {
     return eventEmitter.off(eventName, listener);
   }
+
+  /**
+   * Stop listening all events.
+   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   */
+  offAll(eventName) {
+    return eventEmitter.offAll(eventName);
+  }
+
 
 
 
@@ -429,11 +434,18 @@ if (typeof window !== 'undefined') {
 }
 
 },{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"../../lib/subprotocol/raw":5,"./aux/eventEmitter":2}],2:[function(require,module,exports){
+/**
+ * The EventEmitter based on window CustomEvent. Inspired by the NodeJS event lib.
+ * Used in:
+ * - regoch-spa / lib
+ * - regoch-websocket / clientBrowser/src/aux
+ */
 class EventEmitter {
 
   constructor() {
-    this.activeOns = []; // [{eventName:string, listenerCB:Function}]
+    this.activeOns = []; // [{eventName:string, listener:Function, listenerWindow:Function}]
   }
+
 
   /**
    * Create and emit the event
@@ -441,8 +453,8 @@ class EventEmitter {
    * @param {any} detail - event argument
    * @returns {void}
    */
-  emit(eventName, detail) {
-    const evt = new CustomEvent(eventName, {detail});
+  emit(eventName, detail = {}) {
+    const evt = new CustomEvent(eventName, { detail });
     window.dispatchEvent(evt);
   }
 
@@ -450,53 +462,47 @@ class EventEmitter {
   /**
    * Listen for the event
    * @param {string} eventName - event name, for example: 'pushstate'
-   * @param {Function} listener - callback function with event parameter
+   * @param {Function} listener - callback function, for example msg => {...}
    * @returns {void}
    */
   on(eventName, listener) {
-    const listenerCB = event => { listener(event); };
+    const listenerWindow = event => {
+      const detailValues = this._getDetailValues(listener, event.detail);
+      listener.call(null, ...detailValues);
+    };
 
-    // remove duplicated listeners
-    let ind = 0;
-    for (const activeOn of this.activeOns) {
-      if (activeOn.eventName === eventName && activeOn.listenerCB.toString() === listenerCB.toString()) {
-        window.removeEventListener(eventName, activeOn.listenerCB);
-        this.activeOns.splice(ind, 1);
-      }
-      ind++;
-    }
-
-    this.activeOns.push({eventName, listenerCB});
-    window.addEventListener(eventName, listenerCB);
+    this._removeOne(eventName, listener);
+    this.activeOns.push({ eventName, listener, listenerWindow });
+    window.addEventListener(eventName, listenerWindow);
   }
 
 
   /**
    * Listen for the event only once
    * @param {string} eventName - event name, for example: 'pushstate'
-   * @param {Function} listener - callback function with event parameter
+   * @param {Function} listener - callback function
    * @returns {void}
    */
   once(eventName, listener) {
-    const listenerCB = event => {
-      listener(event);
-      window.removeEventListener(eventName, listenerCB);
+    const listenerWindow = event => {
+      const detailValues = this._getDetailValues(listener, event.detail);
+      listener.call(null, ...detailValues);
+
+      this._removeOne(eventName, listener, listenerWindow);
     };
-    window.addEventListener(eventName, listenerCB, {once: true});
+
+    window.addEventListener(eventName, listenerWindow, { once: true });
   }
 
 
   /**
    * Stop listening the event for specific listener.
    * @param {string} eventName - event name, for example: 'pushstate'
-   * @param {Function} listener - callback function with event parameter
+   * @param {Function} listener - callback function, for example msg => {...}
    * @returns {void}
    */
   off(eventName, listener) {
-    const listenerCB = event => {
-      listener(event);
-    };
-    window.removeEventListener(eventName, listenerCB);
+    this._removeOne(eventName, listener);
   }
 
 
@@ -510,7 +516,7 @@ class EventEmitter {
     let ind = 0;
     for (const activeOn of this.activeOns) {
       if (activeOn.eventName === eventName) {
-        window.removeEventListener(eventName, activeOn.listenerCB);
+        window.removeEventListener(activeOn.eventName, activeOn.listenerWindow);
         this.activeOns.splice(ind, 1);
       }
       ind++;
@@ -518,14 +524,70 @@ class EventEmitter {
   }
 
 
-
   /**
    * Get all active listeners.
-   * @returns {{eventName:string, listenerCB:Function}[]}
+   * @returns {{eventName:string, listener:Function, listenerWindow:Function}[]}
    */
   getListeners() {
-    return {...this.activeOns};
+    return { ...this.activeOns };
   }
+
+
+
+
+
+  /*** PRIVATES ***/
+  /**
+   * Remove a listener from window and this.activeOns
+   */
+  _removeOne(eventName, listener) {
+    if (!listener) { throw new Error('eventEmitter._removeOne Error: listener is not defined'); }
+    let ind = 0;
+    for (const activeOn of this.activeOns) {
+      if (activeOn.eventName === eventName && activeOn.listener.toString() === listener.toString()) {
+        window.removeEventListener(activeOn.eventName, activeOn.listenerWindow);
+        this.activeOns.splice(ind, 1);
+      }
+      ind++;
+    }
+  }
+
+
+  /**
+   * Get values from the event.detail object
+   * @param {Function} listener - callback function
+   * @param {object} detail - event.detail object, for example {msg, msgSTR}
+   * @returns {Array} - an array of the detail values (selected by the listener arguments)
+   */
+  _getDetailValues(listener, detail) {
+    if (!listener) { throw new Error('eventEmitter._getDetailValues Error: listener is not defined'); }
+    // console.log('\n------ _getDetailValues() ------');
+    // console.log('listener::', listener.toString());
+
+    // get listener function arguments
+    const reg1 = /\((.*)\)\s*\=\>/; // (msg) =>
+    const reg2 = /(.+)\s*\=\>/; // msg =>
+    const reg3 = /function\s*\((.*)\)/; // function(msg)
+
+    const listenerStr = listener.toString();
+
+    let matched = listenerStr.match(reg1);
+    if (!matched) { matched = listenerStr.match(reg2); }
+    if (!matched) { matched = listenerStr.match(reg3); }
+    if (!matched) { console.error(`_getDetailValues Err:: The listener is not valid ! listener:: ${listener.toString()}`); return; }
+
+    // console.log('matched:::', matched);
+    const args_str = matched[1];
+    const args = args_str.split(',').map(arg => arg.trim()); // ['msg', 'msgSTR']
+
+    // get detail values
+    const detailValues = args.map(arg => detail[arg]);
+    // console.log('detailValues:::', detailValues);
+
+    return detailValues;
+  }
+
+
 
 
 
@@ -545,7 +607,7 @@ class Helper {
    */
   generateID() {
     const rnd = Math.random().toString();
-    const rrr = rnd.replace('0.', '').substring(0,3);
+    const rrr = rnd.replace('0.', '').substring(0, 3);
 
     const timestamp = new Date(); // UTC (Greenwich time)
     const tsp = timestamp.toISOString()
@@ -616,7 +678,7 @@ class Helper {
     // add new line
     bytes = bytes.map((byte, key) => {
       if (key === 0) { byte = '\n ' + byte; }
-      if ((key + 1) % perRow === 0) { byte += '\n';}
+      if ((key + 1) % perRow === 0) { byte += '\n'; }
       return byte;
     });
 

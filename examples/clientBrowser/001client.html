@@ -1,95 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>001client - browser</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS-min.js"></script>
-    <!-- <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS.js.map"></script> -->
-    <script src="../../../regoch-router/Router.js"></script>
-    <script src="001client.js"></script>
-    <style>
-      * {
-        font-family: Verdana;
-      }
-      h4 {
-        color:Gray;
-      }
-      input {
-        width: 340px;
-      }
-      [data-text] {
-        color: brown;
-        font-size: smaller;
-        margin-left: 5px;
-      }
-      #incomingMessage {
-        color:orange;
-        font-size: smaller;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>WebSocket Example</h1>
-    <p>To make this client works properly start the <a href="https://github.com/smikodanic/regoch-websocket" target="_blank">Regoch Websocket Server</a>.
+
+<head>
+  <meta charset="utf-8">
+  <title>001client - browser</title>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
+  <!-- <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS-min.js"></script> -->
+  <!-- <script src="../../clientBrowser/dist/client13jsonRWS/client13jsonRWS.js.map"></script> -->
+  <script src="../../../regoch-router/Router.js"></script>
+  <script src="001client.js"></script>
+  <style>
+    * {
+      font-family: Verdana;
+    }
+
+    h4 {
+      color: Gray;
+    }
+
+    input {
+      width: 340px;
+    }
+
+    [data-text] {
+      color: brown;
+      font-size: smaller;
+      margin-left: 5px;
+    }
+
+    #incomingMessage {
+      color: orange;
+      font-size: smaller;
+    }
+
+  </style>
+</head>
+
+<body>
+  <h1>WebSocket Example</h1>
+  <p>To make this client works properly start the <a href="https://github.com/smikodanic/regoch-websocket" target="_blank">Regoch Websocket Server</a>.
     Open your browser's Developer Tools &raquo; Console.</p>
 
-    <h3>Connection Test</h3>
-    <button onclick="testCB.connectMe()">Connect</button>
-    <button onclick="testCB.disconnect()">Disconnect</button>
+  <h3>Connection Test</h3>
+  <button onclick="testCB.connectMe()">Connect</button>
+  <button onclick="testCB.disconnect()">Disconnect</button>
 
 
-    <br><br>
-    <h3>Message Properties</h3>
-    <p>{id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}</p>
+  <br><br>
+  <h3>Message Properties</h3>
+  <p>{id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}</p>
 
 
-    <h4>Questions</h4>
-    <button onclick="testCB.questionSocketId_test()">Get my ID</button> <span data-text="socketID"></span>
-    <br><button onclick="testCB.questionSocketList_test()">List socket IDs</button> <span data-text="socketIDs"></span>
-    <br><button onclick="testCB.questionRoomList_test()">List all rooms</button> <span data-text="roomNames"></span>
-    <br><button onclick="testCB.questionRoomListmy_test()">List my rooms</button> <span data-text="myRoomNames"></span>
+  <h4>Questions</h4>
+  <button onclick="testCB.questionSocketId_test()">Get my ID</button> <span data-text="socketID"></span>
+  <br><button onclick="testCB.questionSocketList_test()">List socket IDs</button> <span data-text="socketIDs"></span>
+  <br><button onclick="testCB.questionRoomList_test()">List all rooms</button> <span data-text="roomNames"></span>
+  <br><button onclick="testCB.questionRoomListmy_test()">List my rooms</button> <span data-text="myRoomNames"></span>
 
 
-    <br><br>
-    <h4>Send message</h4>
-    <input type="number" id="to1" placeholder="to"><input type="text" id="payload1" placeholder="payload (message)"><button onclick="testCB.sendOne_test()">send one</button>
-    <br><input type="string" id="to2" placeholder="to (separate IDs with comma)"><input type="text" id="payload2" placeholder="payload (message)"><button onclick="testCB.send_test()">send many</button>
-    <br><input type="text" id="payload3" placeholder="payload (message)"><button onclick="testCB.broadcast_test()">broadcast</button> - send to all but not the sender
-    <br><input type="text" id="payload4" placeholder="payload (message)"><button onclick="testCB.sendAll_test()">send all</button> - send to all clients
-    <br><input type="number" id="to5" placeholder="to"><button onclick="testCB.sendOne_consecutive_test()">send 100 times</button> - send same message consecutive 100x to one receiver
+  <br><br>
+  <h4>Send message</h4>
+  <input type="number" id="to1" placeholder="to"><input type="text" id="payload1" placeholder="payload (message)"><button onclick="testCB.sendOne_test()">send one</button>
+  <br><input type="string" id="to2" placeholder="to (separate IDs with comma)"><input type="text" id="payload2" placeholder="payload (message)"><button onclick="testCB.send_test()">send many</button>
+  <br><input type="text" id="payload3" placeholder="payload (message)"><button onclick="testCB.broadcast_test()">broadcast</button> - send to all but not the sender
+  <br><input type="text" id="payload4" placeholder="payload (message)"><button onclick="testCB.sendAll_test()">send all</button> - send to all clients
+  <br><input type="number" id="to5" placeholder="to"><button onclick="testCB.sendOne_consecutive_test()">send 100 times</button> - send same message consecutive 100x to one receiver
 
 
-    <br><br>
-    <h4>Room</h4>
-    room: <input type="text" id="roomName" placeholder="room name">
-      <button onclick="testCB.roomEnter_test()">Enter the room</button>
-      <button onclick="testCB.roomExit_test()">Exit from room</button>
-      <button onclick="testCB.roomExitAll_test()">Exit from all rooms</button>
-    <br>
-    <br>message: <input type="text" id="roomMessage" placeholder="room message"><button onclick="testCB.roomSend_test()">Send to room</button>
+  <br><br>
+  <h4>Room</h4>
+  room: <input type="text" id="roomName" placeholder="room name">
+  <button onclick="testCB.roomEnter_test()">Enter the room</button>
+  <button onclick="testCB.roomExit_test()">Exit from room</button>
+  <button onclick="testCB.roomExitAll_test()">Exit from all rooms</button>
+  <br>
+  <br>message: <input type="text" id="roomMessage" placeholder="room message"><button onclick="testCB.roomSend_test()">Send to room</button>
 
 
 
-    <br><br>
-    <h4>Server Commands</h4>
-    nickname: <input type="text" id="nickname" placeholder="nick name"><button onclick="testCB.setNick_test()">set nick name</button>
-    <br>route:
-      <input type="text" id="routeUri" placeholder="uri" value="/shop/product/55?limit=25">
-      <input type="text" id="routeBody" placeholder="body" value='{"test": "something"}'>
-      <button onclick="testCB.route_test()">send route</button>
+  <br><br>
+  <h4>Server Commands</h4>
+  nickname: <input type="text" id="nickname" placeholder="nick name"><button onclick="testCB.setNick_test()">set nick name</button>
+  <br>route:
+  <input type="text" id="routeUri" placeholder="uri" value="/shop/product/55?limit=25">
+  <input type="text" id="routeBody" placeholder="body" value='{"test": "something"}'>
+  <button onclick="testCB.route_test()">send route</button>
 
-    <br><input type="text" id="routeUri2" placeholder="uri" value="/send/me/back"><button onclick="testCB.route_test2()">return route</button>
+  <br><input type="text" id="routeUri2" placeholder="uri" value="/send/me/back"><button onclick="testCB.route_test2()">return route</button>
+
+  <br><br>
+  <h4>Incoming Messages</h4>
+  <p id="incomingMessage"></p>
 
 
-    <br><br>
-    <h4>Incoming Messages</h4>
-    <p id="incomingMessage"></p>
-
-
-    <br><br>
-    <h4>Message format examples:</h4>
-    <textarea style="display:block;width:90%;height:210px;">
+  <br><br>
+  <h4>Message format examples:</h4>
+  <textarea style="display:block;width:90%;height:210px;">
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "room/subscribe", "payload": "My Chat Room"}
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "room/unsubscribe", "payload": "My Chat Room"}
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "room/message", to: "My Chat Room", "payload": "Some message to room"}
@@ -106,5 +113,19 @@
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "socket/broadcast", "payload": "Some message to all another clients except the sender"}
     {"id": 210129163129492000, "from": 210129163129492111, "cmd": "socket/sendall", "payload": "Some message to all another clients"}
     </textarea>
-  </body>
+</body>
+
+
+<br><br>
+<h4>Test on, once, off, offAll</h4>
+1. Start the messages which will be send every one second --- <input type="number" id="toID" placeholder="to ID"> <button type="button" onclick="testCB.sendContinuous()">Send Continuous Messages</button>
+<br>2. Open this page in another tab and test on, once, off, offAll by clicking the buttons down.
+<br><button onclick="testCB.testON()">test on()</button> - will start to receive the messages
+<br><button onclick="testCB.testONCE()">test once()</button> - will receive only one message
+<br><button onclick="testCB.testOFF()">test off()</button> - will turn of receiving the messages
+<br><button onclick="testCB.testOFFALL()">test offAll()</button> - will turn of receiving the all messages
+<br><b>message:</b> <span id="receivedMessage" style="font:12px Verdana;color:green;"></span>
+
+
+
 </html>
