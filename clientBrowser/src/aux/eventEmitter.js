@@ -1,8 +1,5 @@
 /**
  * The EventEmitter based on window CustomEvent. Inspired by the NodeJS event lib.
- * Used in:
- * - regoch-spa / lib
- * - regoch-websocket / clientBrowser/src/aux
  */
 class EventEmitter {
 
