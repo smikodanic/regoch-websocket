@@ -117,7 +117,6 @@ class Client13jsonRWS extends DataParser {
   async reconnect() {
     const attempts = this.wcOpts.reconnectAttempts;
     const delay = this.wcOpts.reconnectDelay;
-
     if (this.attempt <= attempts) {
       await helper.sleep(delay);
       this.connect();
@@ -186,6 +185,7 @@ class Client13jsonRWS extends DataParser {
         delete this.socketID;
         // if (hadError) { this.reconnect(); } // prevent reconnection when socket is destroyed by the server
         this.reconnect();
+        this.eventEmitter.emit('disconnected', hadError);
       });
 
 
@@ -599,7 +599,7 @@ class Client13jsonRWS extends DataParser {
   /**
    * Listen the event.
    * * NOTICE: event 'message-error' - error in the received message, usually when message doen't conform the jsonRWS subprotocol
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
    * @param {Function} listener - callback function
    */
   on(eventName, listener) {
@@ -608,7 +608,7 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Listen the event only one time.
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
    * @param {Function} listener - callback function
    */
   once(eventName, listener) {
@@ -617,7 +617,7 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Stop listening the event.
-   * @param {string} eventName - event name: 'connected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'closed-by-server', 'ping', 'pong', 'message', 'message-error', 'question', 'route', 'server-error'
    * @param {Function} listener - callback function
    */
   off(eventName, listener) {

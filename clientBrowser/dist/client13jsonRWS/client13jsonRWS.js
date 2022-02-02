@@ -101,12 +101,15 @@ class Client13jsonRWS {
       eventEmitter.emit('connected');
     };
 
+
     this.wsocket.onclose = (closeEvt) => {
       console.log('WS Connection closed');
       delete this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
       delete this.socketID;
       this.reconnect();
+      eventEmitter.emit('disconnected');
     };
+
 
     this.wsocket.onerror = (errorEvt) => {
       // console.error(errorEvt);
@@ -370,7 +373,7 @@ class Client13jsonRWS {
   /*********** LISTENERS ************/
   /**
    * Listen the event.
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'message', 'message-error', 'route', 'question', 'server-error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   on(eventName, listener) {
@@ -379,7 +382,7 @@ class Client13jsonRWS {
 
   /**
    * Listen the event only one time.
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'message', 'message-error', 'route', 'question', 'server-error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   once(eventName, listener) {
@@ -388,7 +391,7 @@ class Client13jsonRWS {
 
   /**
    * Stop listening the event.
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'message', 'message-error', 'route', 'question', 'server-error'
    * @param {Function} listener - callback function, for example: (msg, msgSTR) => { console.log(msgSTR); }
    */
   off(eventName, listener) {
@@ -397,7 +400,7 @@ class Client13jsonRWS {
 
   /**
    * Stop listening all events.
-   * @param {string} eventName - event name: 'connected', 'message', 'message-error', 'route', 'question', 'server-error'
+   * @param {string} eventName - event name: 'connected', 'disconnected', 'message', 'message-error', 'route', 'question', 'server-error'
    */
   offAll(eventName) {
     return eventEmitter.offAll(eventName);
@@ -436,9 +439,6 @@ if (typeof window !== 'undefined') {
 },{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"../../lib/subprotocol/raw":5,"./aux/eventEmitter":2}],2:[function(require,module,exports){
 /**
  * The EventEmitter based on window CustomEvent. Inspired by the NodeJS event lib.
- * Used in:
- * - regoch-spa / lib
- * - regoch-websocket / clientBrowser/src/aux
  */
 class EventEmitter {
 
