@@ -330,6 +330,7 @@ class Client13jsonRWS extends DataParser {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
+   * @return {object} message object {id, from, to, cmd, payload}
    */
   async carryOut(to, cmd, payload) {
     // DDoS protection (protect from sending too many messages in short period time)
@@ -360,6 +361,7 @@ class Client13jsonRWS extends DataParser {
     if (!!msgSTR) {
       const msgBUF = this.outgoing(msgSTR, 1);
       await this.socketWrite(msgBUF);
+      return msg;
     } else {
       this.debugger('The message is not defined.');
     }
@@ -584,12 +586,13 @@ class Client13jsonRWS extends DataParser {
    * Send route command.
    * @param {string} uri - route URI, for example /shop/product/55
    * @param {any} body - body
+   * @return {object} message object {id, from, to, cmd, payload}
    */
   async route(uri, body) {
     const to = 0;
     const cmd = 'route';
     const payload = { uri, body };
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 

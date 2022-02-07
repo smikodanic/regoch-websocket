@@ -63,7 +63,7 @@ class RWServer {
     console.log('Regoch Websocket Server booted up'.cliBoja('blue', 'bright'));
     console.log(`- storage: ${this.wsOpts.storage}`.cliBoja('blue'));
     console.log(`- subprotocol: ${this.wsOpts.subprotocol}`.cliBoja('blue'));
-    console.log(`- timeout: ${this.wsOpts.timeout} ms`.cliBoja('blue'));
+    console.log(`- timeout (inactivity): ${this.wsOpts.timeout} ms`.cliBoja('blue'));
   }
 
 
