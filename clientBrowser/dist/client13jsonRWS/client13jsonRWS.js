@@ -4,7 +4,7 @@
  * - websocket version: 13
  * - subprotocol: jsonRWS
  */
-const eventEmitter = require('./aux/eventEmitter');
+const eventEmitter = require('./auxillary/eventEmitter');
 const jsonRWS = require('../../lib/subprotocol/jsonRWS');
 const raw = require('../../lib/subprotocol/raw');
 const helper = require('../../lib/helper');
@@ -164,6 +164,7 @@ class Client13jsonRWS {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
+   * @return {object} message object {id, from, to, cmd, payload}
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
@@ -177,6 +178,7 @@ class Client13jsonRWS {
     if (!!msg && !!this.wsocket && this.wsocket.readyState === 1) {
       await new Promise(r => setTimeout(r, 0));
       await this.wsocket.send(msg);
+      return msg;
     } else {
       throw new Error('The message is not defined or the client is disconnected.');
     }
@@ -359,12 +361,13 @@ class Client13jsonRWS {
    * Send route command.
    * @param {string} uri - route URI, for example /shop/product/55
    * @param {any} body - body
+   * @return {object} message object {id, from, to, cmd, payload}
    */
   async route(uri, body) {
     const to = 0;
     const cmd = 'route';
     const payload = { uri, body };
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -436,7 +439,7 @@ if (typeof window !== 'undefined') {
   window.regochWebsocket = { Client13jsonRWS };
 }
 
-},{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"../../lib/subprotocol/raw":5,"./aux/eventEmitter":2}],2:[function(require,module,exports){
+},{"../../lib/helper":3,"../../lib/subprotocol/jsonRWS":4,"../../lib/subprotocol/raw":5,"./auxillary/eventEmitter":2}],2:[function(require,module,exports){
 /**
  * The EventEmitter based on window CustomEvent. Inspired by the NodeJS event lib.
  */

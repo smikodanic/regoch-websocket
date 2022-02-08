@@ -3,7 +3,7 @@
  * - websocket version: 13
  * - subprotocol: jsonRWS
  */
-const eventEmitter = require('./aux/eventEmitter');
+const eventEmitter = require('./auxillary/eventEmitter');
 const jsonRWS = require('../../lib/subprotocol/jsonRWS');
 const raw = require('../../lib/subprotocol/raw');
 const helper = require('../../lib/helper');
