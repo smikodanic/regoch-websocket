@@ -1,8 +1,8 @@
 const Server = require('http').Server;
 const { websocket13, helper, StringExt } = require('../lib');
 const storage = require('./storage');
-const SocketExtension = require('./aux/SocketExtension');
-const DataTransfer = require('./aux/DataTransfer');
+const SocketExtension = require('./auxillary/SocketExtension');
+const DataTransfer = require('./auxillary/DataTransfer');
 
 new StringExt();
 
