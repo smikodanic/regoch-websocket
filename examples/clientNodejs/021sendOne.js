@@ -20,7 +20,8 @@ const main = async () => {
     reconnectAttempts: 5, // try to reconnect 5 times
     reconnectDelay: 3000, // delay between reconnections is 3 seconds
     subprotocols: ['jsonRWS'],
-    debug: false
+    debug: false,
+    debug_DataParser: false
   };
   const testClient = new TestClient(wcOpts);
   await testClient.connect();

@@ -6,7 +6,7 @@ const { RWClientNodejs, lib } = require('../../index.js');
 const helper = lib.helper;
 
 const Router = require('regoch-router');
-const router = new Router({debug: false});
+const router = new Router({ debug: false });
 
 
 class TestClient extends RWClientNodejs {
@@ -20,11 +20,12 @@ const main = async () => {
   // connect to websocket server
   const wcOpts = {
     wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-    questionTimeout: 3*1000,
+    questionTimeout: 3 * 1000,
     reconnectAttempts: 5, // try to reconnect 5 times
     reconnectDelay: 3000, // delay between reconnections is 3 seconds
     subprotocols: ['jsonRWS'],
-    debug: false
+    debug: false,
+    debug_DataParser: false
   };
   const testClient = new TestClient(wcOpts);
   await testClient.connect();
