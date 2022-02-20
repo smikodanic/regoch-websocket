@@ -430,6 +430,17 @@ class Client13jsonRWS extends DataParser {
 
 
   /**
+   * Send raw string message to the server. Server must have 'raw' subprotocol.
+   * This method is mainly used for testing purposes.
+   * @param {string} msgSTR - any string message
+   */
+  async sendRaw(msgSTR) {
+    const msgBUF = this.outgoing(msgSTR, 1);
+    await this.socketWrite(msgBUF);
+  }
+
+
+  /**
    * Send PING to server n times, every ms miliseconds
    * @param {number} ms - sending interval
    * @param {number} n - how many times to send ping (if 0 or undefined send infinitely)

@@ -72,6 +72,7 @@ class DataTransfer {
       } catch (err) {
         const socketID = !!socket && !!socket.extension ? socket.extension.id : '';
         console.log(`DataTransfer.carryIn:: socketID: ${socketID}, WARNING: ${err.message}`.cliBoja('yellow'));
+        console.log(err.stack);
         this.eventEmitter.emit('message-error', err);
         // this.sendError(err, socket); // return error message back to the client
         // await new Promise(resolve => setTimeout(resolve, 800));
