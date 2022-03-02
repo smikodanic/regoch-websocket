@@ -59,7 +59,7 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
   /*** Send Tests */
   async sendOne_test() {
-    const to = +document.getElementById('to1').value;
+    const to = document.getElementById('to1').value;
     const payload = document.getElementById('payload1').value;
     await this.sendOne(to, payload);
   }
@@ -83,7 +83,7 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
   // async/await must be used in the consecutive sending
   async sendOne_consecutive_test() {
-    const to = +document.getElementById('to5').value;
+    const to = document.getElementById('to5').value;
     for (let i = 1; i <= 100; i++) {
       const payload = `${i}. consecutive message`;
       await this.sendOne(to, payload);
@@ -189,7 +189,7 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
 
   /*** test on, once, off, offAll ***/
   async sendContinuous() {
-    const to = +$('#toID').val();
+    const to = $('#toID').val();
     for (let i = 1; i <= 100; i++) {
       const payload = `${i}. message sent`;
       await this.sendOne(to, payload);

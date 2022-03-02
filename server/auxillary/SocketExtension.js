@@ -17,7 +17,7 @@ class SocketExtension {
    * @param {string} origin - 'Origin' request header
    * @param {string} ip - external socket IP address - 58.123.33.22
    */
-  constructor (socket, wsOpts, socketStorage, dataTransfer, url, userAgent, origin, ip, port) {
+  constructor(socket, wsOpts, socketStorage, dataTransfer, url, userAgent, origin, ip, port) {
     this.socket = socket;
     this.wsOpts = wsOpts;
     this.socketStorage = socketStorage;
@@ -45,13 +45,13 @@ class SocketExtension {
     // handle URL query string
     this.socket.extension.urlQuery = {}; // {authkey: 'TRTmrt', socketID: '210729152147533020'}
     const urlObj = new URL('http://localhost' + this.url);
-    for(const key of urlObj.searchParams.keys()) {
+    for (const key of urlObj.searchParams.keys()) {
       this.socket.extension.urlQuery[key] = urlObj.searchParams.get(key);
     }
 
     // properties
-    // this.socket.extension.id = helper.generateID(); // 201129131151783230
-    this.socket.extension.id = +this.socket.extension.urlQuery.socketID; // 201129131151783230
+    // this.socket.extension.id = helper.generateID(); // 20201129131151783230
+    this.socket.extension.id = this.socket.extension.urlQuery.socketID; // 20201129131151783230
     this.socket.extension.nick = ''; // custom nick name
     this.socket.extension.ip = this.ip; // client IP
     this.socket.extension.port = +this.socket.remotePort; // client port

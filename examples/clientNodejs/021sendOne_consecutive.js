@@ -26,7 +26,7 @@ const main = async () => {
   };
   const testClient = new TestClient(wcOpts);
   const socket = await testClient.connect();
-  const to = +process.argv[2];
+  const to = process.argv[2];
 
   for (let i = 1; i <= 100; i++) {
     const payload = `${i}. consecutive message`;

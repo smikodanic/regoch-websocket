@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "regoch-router": "1.0.3"
+    "regoch-router": "1.0.4"
   }
 }

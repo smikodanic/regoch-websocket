@@ -17,7 +17,7 @@ class Client13jsonRWS {
   constructor(wcOpts) {
     this.wcOpts = wcOpts; // websocket client options
     this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
-    this.socketID; // socket ID number, for example: 210214082949459100
+    this.socketID; // socket ID number, for example: 20210214082949459100
     this.attempt = 1; // reconnect attempt counter
     this.subprotocolLib;
   }
@@ -167,8 +167,8 @@ class Client13jsonRWS {
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
-    const from = +this.socketID; // the sender ID
-    if (!to) { to = 0; } // server ID is 0
+    const from = this.socketID; // the sender ID
+    if (!to) { to = '0'; } // server ID is 0
     const msgObj = { id, from, to, cmd, payload };
     const msg = jsonRWS.outgoing(msgObj);
     this.debugger('Sent::', msg);
@@ -213,7 +213,7 @@ class Client13jsonRWS {
    * @param {any} msg - message sent to the clients
    */
   async broadcast(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/broadcast';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -224,7 +224,7 @@ class Client13jsonRWS {
    * @param {any} msg - message sent to the clients
    */
   async sendAll(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/sendall';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -261,7 +261,7 @@ class Client13jsonRWS {
    */
   async questionSocketId() {
     const answer = await this.question('question/socket/id');
-    this.socketID = +answer.payload;
+    this.socketID = answer.payload;
     return this.socketID;
   }
 
@@ -301,7 +301,7 @@ class Client13jsonRWS {
    * @param {string} roomName
    */
   async roomEnter(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/enter';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -312,7 +312,7 @@ class Client13jsonRWS {
    * @param {string} roomName
    */
   async roomExit(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exit';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -322,7 +322,7 @@ class Client13jsonRWS {
    * Unsubscribe from all rooms.
    */
   async roomExitAll() {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exitall';
     const payload = undefined;
     await this.carryOut(to, cmd, payload);
@@ -349,7 +349,7 @@ class Client13jsonRWS {
    * @param {string} nickname - nick name
    */
   async setNick(nickname) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/nick';
     const payload = nickname;
     await this.carryOut(to, cmd, payload);
@@ -363,7 +363,7 @@ class Client13jsonRWS {
    * @return {object} message object {id, from, to, cmd, payload}
    */
   async route(uri, body) {
-    const to = 0;
+    const to = '0';
     const cmd = 'route';
     const payload = { uri, body };
     return await this.carryOut(to, cmd, payload);

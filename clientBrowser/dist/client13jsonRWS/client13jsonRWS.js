@@ -18,7 +18,7 @@ class Client13jsonRWS {
   constructor(wcOpts) {
     this.wcOpts = wcOpts; // websocket client options
     this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
-    this.socketID; // socket ID number, for example: 210214082949459100
+    this.socketID; // socket ID number, for example: 20210214082949459100
     this.attempt = 1; // reconnect attempt counter
     this.subprotocolLib;
   }
@@ -168,8 +168,8 @@ class Client13jsonRWS {
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
-    const from = +this.socketID; // the sender ID
-    if (!to) { to = 0; } // server ID is 0
+    const from = this.socketID; // the sender ID
+    if (!to) { to = '0'; } // server ID is 0
     const msgObj = { id, from, to, cmd, payload };
     const msg = jsonRWS.outgoing(msgObj);
     this.debugger('Sent::', msg);
@@ -214,7 +214,7 @@ class Client13jsonRWS {
    * @param {any} msg - message sent to the clients
    */
   async broadcast(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/broadcast';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -225,7 +225,7 @@ class Client13jsonRWS {
    * @param {any} msg - message sent to the clients
    */
   async sendAll(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/sendall';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -262,7 +262,7 @@ class Client13jsonRWS {
    */
   async questionSocketId() {
     const answer = await this.question('question/socket/id');
-    this.socketID = +answer.payload;
+    this.socketID = answer.payload;
     return this.socketID;
   }
 
@@ -302,7 +302,7 @@ class Client13jsonRWS {
    * @param {string} roomName
    */
   async roomEnter(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/enter';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -313,7 +313,7 @@ class Client13jsonRWS {
    * @param {string} roomName
    */
   async roomExit(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exit';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -323,7 +323,7 @@ class Client13jsonRWS {
    * Unsubscribe from all rooms.
    */
   async roomExitAll() {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exitall';
     const payload = undefined;
     await this.carryOut(to, cmd, payload);
@@ -350,7 +350,7 @@ class Client13jsonRWS {
    * @param {string} nickname - nick name
    */
   async setNick(nickname) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/nick';
     const payload = nickname;
     await this.carryOut(to, cmd, payload);
@@ -364,7 +364,7 @@ class Client13jsonRWS {
    * @return {object} message object {id, from, to, cmd, payload}
    */
   async route(uri, body) {
-    const to = 0;
+    const to = '0';
     const cmd = 'route';
     const payload = { uri, body };
     return await this.carryOut(to, cmd, payload);
@@ -604,9 +604,9 @@ class Helper {
 
   /**
    * Create unique id. It's combination of timestamp and random number 'r'
-   * in format: YYMMDDHHmmssSSSrrr ---> YY year, MM month, DD day, HH hour, mm min, ss sec, SSS ms, rrr 3 random digits
-   * 18 digits in total, for example: 210129163129492100
-   * @returns {number}
+   * in format: YYYYMMDDHHmmssSSSrrr ---> YYYY year, MM month, DD day, HH hour, mm min, ss sec, SSS ms, rrr 3 random digits
+   * 20 digits in total, for example: '20210129163129492100'
+   * @returns {string}
    */
   generateID() {
     const rnd = Math.random().toString();
@@ -614,14 +614,13 @@ class Helper {
 
     const timestamp = new Date(); // UTC (Greenwich time)
     const tsp = timestamp.toISOString()
-      .replace(/^20/, '')
       .replace(/\-/g, '')
       .replace(/\:/g, '')
       .replace('T', '')
       .replace('Z', '')
       .replace('.', '');
 
-    const id = +(tsp + rrr);
+    const id = tsp + rrr;
     return id;
   }
 
@@ -715,16 +714,16 @@ module.exports = new Helper();
 class JsonRWS {
 
   constructor() {
-    this.delimiter = '<<!END!>>';
+    this.delimiter = '\u0003';  // end-of-text unicode character
   }
 
   /*********** INCOMING MESSAGES ***********/
   /**
    * Execute the jsonRWS subprotocol for incoming messages. Filter and map incoming messages.
-   * 1. Test if the message has valid "jsonRWS" format {id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}.
+   * 1. Test if the message has valid "jsonRWS" format {id:string, from:string, to:string|string[], cmd:string, payload?:any}.
    * 2. Convert the message from string to object.
    * @param {string} msgSTR -incoming message
-   * @returns {{id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}}
+   * @returns {{id:string, from:string, to:numstringber|string[], cmd:string, payload?:any}}
    */
   incoming(msgSTR) {
     let tf = false;
@@ -747,9 +746,9 @@ class JsonRWS {
   /*********** OUTGOING MESSAGES ***********/
   /**
    * Execute the jsonRWS subprotocol for outgoing messages. Filter and map outgoing messages.
-   * 1. Test if the message has valid "jsonRWS" format {id:number, from:number, to:number|number[]|string, cmd:string, payload:any}.
+   * 1. Test if the message has valid "jsonRWS" format {id:string, from:string, to:string|string[], cmd:string, payload:any}.
    * 2. Convert the message from object to string.
-   * @param {{id:number, from:number, to:number|number[]|string, cmd:string, payload?:any}} msg - outgoing message
+   * @param {{id:string, from:string, to:string|string[], cmd:string, payload?:any}} msg - outgoing message
    * @returns {string}
    */
   outgoing(msg) {
@@ -785,27 +784,31 @@ class JsonRWS {
 
     /*** socket commands ***/
     if (cmd === 'socket/sendone') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210201164339351900, cmd: 'socket/sendone', payload: 'Some message to another client'}
-      const id = +msg.to;
-      const toSocket = await socketStorage.findOne({id});
-      dataTransfer.sendOne(msg, toSocket); }
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '20210201164339351900', cmd: 'socket/sendone', payload: 'Some message to another client'}
+      const id = msg.to;
+      const toSocket = await socketStorage.findOne({ id });
+      dataTransfer.sendOne(msg, toSocket);
+    }
 
     else if (cmd === 'socket/send') {
-      // {id: 210129163129492000, from: 210129163129492111, to: [210201164339351900, 210201164339351901], cmd: 'socket/send', payload: 'Some message to another client(s)'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: ['20210201164339351900', 210201164339351901], cmd: 'socket/send', payload: 'Some message to another client(s)'}
       const socketIDs = to.map(socketID => +socketID); // convert to numbers
-      const sockets = await socketStorage.find({id: {$in: socketIDs}});
-      dataTransfer.send(msg, sockets); }
+      const sockets = await socketStorage.find({ id: { $in: socketIDs } });
+      dataTransfer.send(msg, sockets);
+    }
 
     else if (cmd === 'socket/broadcast') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'socket/broadcast', payload: 'Some message to all clients except the sender'}
-      dataTransfer.broadcast(msg, socket); }
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'socket/broadcast', payload: 'Some message to all clients except the sender'}
+      dataTransfer.broadcast(msg, socket);
+    }
 
     else if (cmd === 'socket/sendall') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'socket/sendall', payload: 'Some message to all clients and the sender'}
-      dataTransfer.sendAll(msg); }
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'socket/sendall', payload: 'Some message to all clients and the sender'}
+      dataTransfer.sendAll(msg);
+    }
 
     else if (cmd === 'socket/nick') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'socket/nick', payload: 'Peter Pan'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'socket/nick', payload: 'Peter Pan'}
       const nickname = msg.payload;
       try {
         await socketStorage.setNick(socket, nickname);
@@ -814,66 +817,76 @@ class JsonRWS {
         msg.cmd = 'error';
         msg.payload = err.message;
       }
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
 
     /*** room commands ***/
     else if (cmd === 'room/enter') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'room/enter', payload: 'My Chat Room'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'room/enter', payload: 'My Chat Room'}
       const roomName = payload;
       socketStorage.roomEnter(socket, roomName);
       msg.payload = `Entered in the room '${roomName}'`;
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'room/exit') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'room/exit', payload: 'My Chat Room'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'room/exit', payload: 'My Chat Room'}
       const roomName = payload;
       socketStorage.roomExit(socket, payload);
       msg.payload = `Exited from the room '${roomName}'`;
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'room/exitall') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'room/exitall'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'room/exitall'}
       socketStorage.roomExitAll(socket);
       msg.payload = 'Exited from all rooms';
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'room/send') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 'My Chat Room', cmd: 'room/send', payload: 'Some message to room clients.'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: 'My Chat Room', cmd: 'room/send', payload: 'Some message to room clients.'}
       const roomName = to;
-      dataTransfer.sendRoom(msg, socket, roomName); }
+      dataTransfer.sendRoom(msg, socket, roomName);
+    }
 
 
     /*** route command ***/
     else if (cmd === 'route') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 0, cmd: 'route', payload: {uri: 'shop/login', body: {username:'mark', password:'thG5$#w'}}}
-      eventEmitter.emit('route', msg, socket, dataTransfer, socketStorage, eventEmitter); }
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'route', payload: {uri: 'shop/login', body: {username:'mark', password:'thG5$#w'}}}
+      eventEmitter.emit('route', msg, socket, dataTransfer, socketStorage, eventEmitter);
+    }
 
 
     /*** question commands ***/
     else if (cmd === 'question/socket/id') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/socket/id'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '20210129163129492111', cmd: 'question/socket/id'}
       msg.payload = socket.extension.id;
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'question/socket/list') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/socket/list'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '20210129163129492111', cmd: 'question/socket/list'}
       const sockets = await socketStorage.find();
-      const socket_ids_nicks = sockets.map(socket => { return {id: socket.extension.id, nickname: socket.extension.nickname}; });
-      msg.payload = socket_ids_nicks; // {id:number, nickname:string}
-      socket.extension.sendSelf(msg); }
+      const socket_ids_nicks = sockets.map(socket => { return { id: socket.extension.id, nickname: socket.extension.nickname }; });
+      msg.payload = socket_ids_nicks; // {id:string, nickname:string}
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'question/room/list') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/room/list'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '20210129163129492111', cmd: 'question/room/list'}
       const rooms = await socketStorage.roomList();
       msg.payload = rooms;
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
     else if (cmd === 'question/room/listmy') {
-      // {id: 210129163129492000, from: 210129163129492111, to: 210129163129492111, cmd: 'question/room/listmy'}
+      // {id: '20210129163129492000', from: '20210129163129492111', to: '20210129163129492111', cmd: 'question/room/listmy'}
       const rooms = await socketStorage.roomListOf(msg.from);
       msg.payload = rooms;
-      socket.extension.sendSelf(msg); }
+      socket.extension.sendSelf(msg);
+    }
 
   }
 
@@ -882,7 +895,7 @@ class JsonRWS {
   /******* HELPERS ********/
   /**
    * Helper to test msg properties.
-   * @param {string[]} msgObjProperties - propewrties of the "msg" object
+   * @param {string[]} msgObjProperties - properties of the "msg" object
    */
   _testFields(msgObjProperties) {
     const allowedFields = ['id', 'from', 'to', 'cmd', 'payload'];
@@ -896,7 +909,7 @@ class JsonRWS {
 
     // check if every of required fields is present
     for (const requiredField of requiredFields) {
-      if(msgObjProperties.indexOf(requiredField) === -1) { tf = false; break; }
+      if (msgObjProperties.indexOf(requiredField) === -1) { tf = false; break; }
     }
 
     return tf;
@@ -922,7 +935,7 @@ module.exports = new JsonRWS();
 class Raw {
 
   constructor() {
-    this.delimiter = '';
+    this.delimiter = '\u0003'; // end-of-text unicode character
   }
 
   /*********** INCOMING MESSAGES ***********/
@@ -932,6 +945,7 @@ class Raw {
    * @returns {string}
    */
   incoming(msgSTR) {
+    msgSTR = msgSTR.replace(this.delimiter, ''); // remove delimiter
     const msg = msgSTR;
     return msg;
   }
@@ -947,6 +961,7 @@ class Raw {
   outgoing(msg) {
     let msgSTR = msg;
     if (typeof msg === 'object') { msgSTR = JSON.stringify(msg); }
+    msgSTR += this.delimiter;
     return msgSTR;
   }
 
@@ -957,7 +972,7 @@ class Raw {
    * Process client messages internally.
    * @returns {void}
    */
-  async process() {}
+  async process() { }
 
 
 }

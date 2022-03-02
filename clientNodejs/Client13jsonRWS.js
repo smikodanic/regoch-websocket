@@ -24,7 +24,7 @@ class Client13jsonRWS extends DataParser {
 
     this.wcOpts = wcOpts; // websocket client options
     this.socket; // TCP Socket https://nodejs.org/api/net.html#net_class_net_socket
-    this.socketID; // socket ID number, for example: 210214082949459100
+    this.socketID; // socket ID number, for example: 20210214082949459100
     this.attempt = 1; // reconnect attempt counter
     this.subprotocolLib;
 
@@ -352,8 +352,8 @@ class Client13jsonRWS extends DataParser {
     else { await new Promise(r => setTimeout(r, autodelay)); }
 
     const id = helper.generateID(); // the message ID
-    const from = +this.socketID; // the sender ID
-    if (!to) { to = 0; } // server ID is 0
+    const from = this.socketID; // the sender ID
+    if (!to) { to = '0'; } // server ID is 0
     const msg = { id, from, to, cmd, payload };
     const msgSTR = jsonRWS.outgoing(msg);
 
@@ -411,7 +411,7 @@ class Client13jsonRWS extends DataParser {
    * @param {any} msg - message sent to the clients
    */
   async broadcast(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/broadcast';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -422,7 +422,7 @@ class Client13jsonRWS extends DataParser {
    * @param {any} msg - message sent to the clients
    */
   async sendAll(msg) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/sendall';
     const payload = msg;
     await this.carryOut(to, cmd, payload);
@@ -500,7 +500,7 @@ class Client13jsonRWS extends DataParser {
    */
   async questionSocketId() {
     const answer = await this.question('question/socket/id');
-    this.socketID = +answer.payload;
+    this.socketID = answer.payload;
     return this.socketID;
   }
 
@@ -539,7 +539,7 @@ class Client13jsonRWS extends DataParser {
    * @param {string} roomName
    */
   async roomEnter(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/enter';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -550,7 +550,7 @@ class Client13jsonRWS extends DataParser {
    * @param {string} roomName
    */
   async roomExit(roomName) {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exit';
     const payload = roomName;
     await this.carryOut(to, cmd, payload);
@@ -560,7 +560,7 @@ class Client13jsonRWS extends DataParser {
    * Unsubscribe from all rooms.
    */
   async roomExitAll() {
-    const to = 0;
+    const to = '0';
     const cmd = 'room/exitall';
     const payload = undefined;
     await this.carryOut(to, cmd, payload);
@@ -586,7 +586,7 @@ class Client13jsonRWS extends DataParser {
    * @param {string} nickname - nick name
    */
   async setNick(nickname) {
-    const to = 0;
+    const to = '0';
     const cmd = 'socket/nick';
     const payload = nickname;
     await this.carryOut(to, cmd, payload);
@@ -600,7 +600,7 @@ class Client13jsonRWS extends DataParser {
    * @return {object} message object {id, from, to, cmd, payload}
    */
   async route(uri, body) {
-    const to = 0;
+    const to = '0';
     const cmd = 'route';
     const payload = { uri, body };
     return await this.carryOut(to, cmd, payload);

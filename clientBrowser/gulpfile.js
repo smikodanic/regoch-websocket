@@ -35,7 +35,8 @@ const browserifyTask = async () => {
 /***** GULP WATCHERS *****/
 gulp.task('watch', () => {
   gulp.watch([
-    './src/**/*.js'
+    './src/**/*.js',
+    '../lib/**/*.js'
   ], gulp.series(rimrafTask, browserifyTask));
 });
 
