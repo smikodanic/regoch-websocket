@@ -93,7 +93,7 @@ class RWServer {
       const wsKey = req.headers['sec-websocket-key']; // 7PcnXRWw6+pnRVpPDG3IzA==
       const wsVersion = +req.headers['sec-websocket-version']; // 13
       const wsProtocols = req.headers['sec-websocket-protocol']; // raw,jsonRWS -> subprotocols sent by the client (new WebSocket(wsURL, subprotocols))
-      const wsExtrension = req.headers['sec-websocket-extension']; // permessage-deflate; client_max_window_bits
+      const wsExtension = req.headers['sec-websocket-extension']; // permessage-deflate; client_max_window_bits
       const userAgent = req.headers['user-agent']; // Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36
 
       const wsOpts = this.wsOpts || {};
