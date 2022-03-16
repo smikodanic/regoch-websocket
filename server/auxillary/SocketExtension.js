@@ -146,6 +146,13 @@ class SocketExtension {
       this.socket.extension.authenticated = 'anonymous';
       console.log(`Anonymous WS Authentication`.cliBoja('magenta', 'bright'));
     }
+
+    if (!this.socket.extension.authenticated) {
+      const err = new Error(`Socket is not authenticated! Client IP: ${this.socket.extension.ip} , userAgent: ${this.socket.extension.userAgent}`);
+      this.dataTransfer.sendError(err, this.socket);
+      setTimeout(() => { this.socket.destroy(); }, 100);
+    }
+
   }
 
 
