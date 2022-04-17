@@ -17,7 +17,7 @@ new StringExt();
 class Client13jsonRWS extends DataParser {
 
   /**
-   * @param {{wsURL:string, questionTimeout:number, reconnectAttempts:number, reconnectDelay:number, subprotocols:string[], debug:boolean, debug_DataParser:boolean}} wcOpts - websocket client options
+   * @param {{wsURL:string, connectTimeout:number, reconnectAttempts:number, reconnectDelay:number, questionTimeout:number, subprotocols:string[], debug:boolean, debug_DataParser:boolean}} wcOpts - websocket client options
    */
   constructor(wcOpts) {
     super(wcOpts.debug_DataParser);
@@ -65,6 +65,9 @@ class Client13jsonRWS extends DataParser {
       .update(GUID)
       .digest('base64');
 
+    // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    const timeout = this.wcOpts.connectTimeout || 8000;
+
     // send HTTP request
     const requestOpts = {
       hostname,
@@ -79,7 +82,8 @@ class Client13jsonRWS extends DataParser {
         'Sec-WebSocket-Protocol': this.wcOpts.subprotocols.join(','),
         'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
         'User-Agent': `@regoch/client-nodejs/${package_json.version}`
-      }
+      },
+      timeout
     };
     this.clientRequest = http.request(requestOpts);
     this.clientRequest.on('error', err => { console.log(err); });
@@ -91,9 +95,10 @@ class Client13jsonRWS extends DataParser {
     this.onUpgrade();
 
     // return socket as promise
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       // this.eventEmitter.removeAllListeners(); // not needed if once() is used
       this.eventEmitter.once('connected', () => { resolve(this.socket); });
+      this.clientRequest.on('timeout', err => { reject(new Error(`Websocket connection failed due to timeout ${timeout}ms: ${hostname}:${port}/${path}`)); });
       // console.log(`"connected" listeners: ${this.eventEmitter.listenerCount('connected')}`.cliBoja('yellow'));
     });
   }
