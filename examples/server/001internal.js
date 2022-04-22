@@ -24,8 +24,8 @@ setTimeout(() => {
 // websocket ultra
 const wsOpts = {
   timeout: 5 * 60 * 1000,
-  maxConns: 5,
-  maxIPConns: 3,
+  maxConns: 20,
+  maxIPConns: 10,
   storage: 'memory',
   subprotocol: 'jsonRWS',
   tightening: 100,
@@ -67,8 +67,8 @@ rws.on('connection', async socket => {
 
 /*** all messages stream ***/
 rws.on('message', msg => {
-  // console.log('\nmessageStream::', msg);
-  console.log('on message::', msg.payload);
+  console.log('\nmessageStream::', msg);
+  // console.log('on message::', msg.payload);
 });
 
 

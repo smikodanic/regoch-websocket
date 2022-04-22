@@ -29,8 +29,11 @@ const main = async () => {
   console.log('Listenning for messages from the server...');
 
   // 1) This is the best way because it will catch messages after reconnection
+  let i = 1;
   testClient.on('message', (msg, msgSTR, msgBUF) => {
-    console.log('received::', msgSTR);
+    console.log(`${i}. received::`, msgSTR);
+    if (i % 10 === 0) { console.log(''); }
+    i++;
   });
 
 };

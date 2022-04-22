@@ -15,10 +15,12 @@ const main = async () => {
   // connect to websocket server
   const wcOpts = {
     wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-    questionTimeout: 3 * 1000,
-    reconnectAttempts: 5, // try to reconnect 5 times
-    reconnectDelay: 3000, // delay between reconnections is 3 seconds
-    subprotocols: ['jsonRWS'],
+    connectTimeout: 8000,
+    reconnectAttempts: 6, // try to reconnect n times
+    reconnectDelay: 5000, // delay between reconnections
+    questionTimeout: 13000, // wait for answer
+    subprotocols: ['jsonRWS', 'raw'],
+    autodelayFactor: 500,
     debug: false,
     debug_DataParser: false
   };
@@ -26,7 +28,7 @@ const main = async () => {
   await testClient.connect();
 
   // IMPORTANT!!! Set the message listener before the question is sent.
-  testClient.onMessage(msg => {
+  testClient.on('message', msg => {
     console.log('msg::', msg);
   });
 

@@ -1,8 +1,9 @@
 /**
- * Send to one client.
- * Open client for leistening messages in the another terminal with $node 010onMessage.js
+ * Send to one client: $ node 021sendOne.js 210727090438377820
+ * Open client for listening messages in the another terminal with $ node 010onMessage.js
  */
-const { RWClientNodejs } = require('../../index.js');
+const { RWClientNodejs, lib } = require('../../index.js');
+const helper = lib.helper;
 
 
 class TestClient extends RWClientNodejs {
@@ -16,19 +17,24 @@ const main = async () => {
   // connect to websocket server
   const wcOpts = {
     wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-    questionTimeout: 3 * 1000,
-    reconnectAttempts: 5, // try to reconnect 5 times
-    reconnectDelay: 3000, // delay between reconnections is 3 seconds
-    subprotocols: ['jsonRWS'],
+    connectTimeout: 8000,
+    reconnectAttempts: 6, // try to reconnect n times
+    reconnectDelay: 5000, // delay between reconnections
+    questionTimeout: 13000, // wait for answer
+    subprotocols: ['jsonRWS', 'raw'],
+    autodelayFactor: 500,
     debug: false,
     debug_DataParser: false
   };
   const testClient = new TestClient(wcOpts);
   await testClient.connect();
 
+  const to = process.argv[2];
+  await testClient.sendOne(to, 'A');
 
   console.log('message sent');
-  await testClient.sendOne(211101084932857440, 'some message');
+  await helper.sleep(2000);
+  process.exit();
 };
 
 

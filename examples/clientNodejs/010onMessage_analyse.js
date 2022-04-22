@@ -21,10 +21,12 @@ const main = async () => {
   // connect to websocket server
   const wcOpts = {
     wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-    questionTimeout: 3 * 1000,
-    reconnectAttempts: 5, // try to reconnect 5 times
-    reconnectDelay: 3000, // delay between reconnections is 3 seconds
-    subprotocols: ['jsonRWS'],
+    connectTimeout: 8000,
+    reconnectAttempts: 6, // try to reconnect n times
+    reconnectDelay: 5000, // delay between reconnections
+    questionTimeout: 13000, // wait for answer
+    subprotocols: ['jsonRWS', 'raw'],
+    autodelayFactor: 500,
     debug: false,
     debug_DataParser: false
   };
@@ -40,30 +42,19 @@ const main = async () => {
     console.log('OBJECT message', msg);
     console.log('STRING message', msgSTR);
     console.log('BUFFER message', msgBUF);
+    console.log('msgBUF stringified::', msgBUF.toString('hex').replace(/(.)(.)/g, '$1$2 '));
     console.log('-------------------------------------------');
   });
 
-  // 2) This will not work after reconnection because "this.socket" will not be same after reconnection (not recommended)
-  testClient.onMessage((msg, msgSTR, msgBUF) => {
-    console.log('\n-------------- 2.nd way (onMessage) -------------------');
-    console.log('msg::', msg);
-    console.log('msgSTR::', msgSTR);
-    console.log('msgBUF::', msgBUF);
-    console.log('-------------------------------------------');
-  });
 
-  // 3) This will not work after reconnection because "socket" will not be same after reconnection. It's only receiving message in buffer format. (not recommended)
+  // 2) This will not work after reconnection because "socket" will not be same after reconnection. It's only receiving message in buffer format. (not recommended)
   socket.on('data', msgBUF => {
-    console.log('\n-------------- 3.nd way (on data) -------------------');
+    console.log('\n-------------- 2.nd way (on data) -------------------');
     console.log('msgBUF::', msgBUF);
     console.log('-------------------------------------------');
   });
 
 
-
-  // send question about the info
-  const rooms = await testClient.infoRoomList();
-  console.log('\nrooms::', rooms);
 };
 
 
