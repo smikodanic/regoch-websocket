@@ -17,12 +17,24 @@ new StringExt();
 class Client13jsonRWS extends DataParser {
 
   /**
-   * @param {{wsURL:string, connectTimeout:number, reconnectAttempts:number, reconnectDelay:number, questionTimeout:number, subprotocols:string[], debug:boolean, debug_DataParser:boolean}} wcOpts - websocket client options
+   * @param {{wsURL:string, connectTimeout:number, reconnectAttempts:number, reconnectDelay:number, questionTimeout:number, subprotocols:string[], autodelayFactor:number, debug:boolean, debug_DataParser:boolean}} wcOpts - websocket client options
    */
   constructor(wcOpts) {
     super(wcOpts.debug_DataParser);
 
-    this.wcOpts = wcOpts; // websocket client options
+    // websocket client default options
+    this.wcOpts = wcOpts;
+    if (!wcOpts.wsURL || !/^ws:\/\//.test(wcOpts.wsURL)) { throw new Error('Bad websocket URL'); } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    if (!wcOpts.connectTimeout) { this.wcOpts.connectTimeout = 8000; } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    if (!wcOpts.reconnectAttempts) { this.wcOpts.reconnectAttempts = 6; } // how many times to try to reconnect when connection with the server is lost
+    if (!wcOpts.reconnectDelay) { this.wcOpts.reconnectDelay = 5000; } // delay between reconnections, default is 3 seconds
+    if (!wcOpts.questionTimeout) { this.wcOpts.questionTimeout = 13000; } // how many mss to wait for the answer when question is sent
+    if (!wcOpts.subprotocols) { this.wcOpts.subprotocols = ['jsonRWS', 'raw']; } // list of the supported subprotocols
+    if (!wcOpts.autodelayFactor) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
+    if (!wcOpts.debug) { this.wcOpts.debug = false; }
+    if (!wcOpts.debug_DataParser) { this.wcOpts.debug_DataParser = false; } // ws message level debugging
+
+
     this.socket; // TCP Socket https://nodejs.org/api/net.html#net_class_net_socket
     this.socketID; // socket ID number, for example: 20210214082949459100
     this.attempt = 1; // reconnect attempt counter
@@ -65,8 +77,7 @@ class Client13jsonRWS extends DataParser {
       .update(GUID)
       .digest('base64');
 
-    // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
-    const timeout = this.wcOpts.connectTimeout || 8000;
+    const timeout = this.wcOpts.connectTimeout;
 
     // send HTTP request
     const requestOpts = {
@@ -86,9 +97,8 @@ class Client13jsonRWS extends DataParser {
       timeout
     };
     this.clientRequest = http.request(requestOpts);
-    this.clientRequest.on('error', err => { console.log(err); });
+    this.clientRequest.on('error', err => { console.log(err.message.cliBoja('red')); });
     this.clientRequest.end();
-
 
     // socket events
     this.onEvents();
@@ -96,10 +106,8 @@ class Client13jsonRWS extends DataParser {
 
     // return socket as promise
     return new Promise((resolve, reject) => {
-      // this.eventEmitter.removeAllListeners(); // not needed if once() is used
       this.eventEmitter.once('connected', () => { resolve(this.socket); });
       this.clientRequest.on('timeout', err => { reject(new Error(`Websocket connection failed due to timeout ${timeout}ms: ${hostname}:${port}/${path}`)); });
-      // console.log(`"connected" listeners: ${this.eventEmitter.listenerCount('connected')}`.cliBoja('yellow'));
     });
   }
 
@@ -197,7 +205,7 @@ class Client13jsonRWS extends DataParser {
       socket.on('error', (err) => {
         let errMsg = err.stack;
         if (/ECONNREFUSED/.test(err.stack)) {
-          errMsg = `No connection to server ${this.wcOpts.wsURL}`;
+          errMsg = `No connection to server: ${this.wcOpts.wsURL}`;
         } else {
           this.wcOpts.reconnectAttempts = 0; // do not reconnect
           this.disconnect();
@@ -242,12 +250,7 @@ class Client13jsonRWS extends DataParser {
         if (subprotocol_header === 'jsonRWS') { this.subprotocolLib = jsonRWS; }
         else { this.subprotocolLib = raw; }
 
-        console.log(`
-  - socketID: ${this.socketID},
-  - subprotocol(handshaked): "${subprotocol_header}"
-  - timeout(inactivity): ${this.resHeaders['sec-websocket-timeout']}ms
-  - client(IP:PORT): ${socket.localAddress}:${socket.localPort} --> tcpdump -i any port ${socket.localPort}
-        `.cliBoja('blue'));
+        console.log(`  -socketID:${this.socketID} -subprotocol(handshaked):${subprotocol_header} -timeout(inactivity):${this.resHeaders['sec-websocket-timeout']}ms -client:${socket.localAddress}:${socket.localPort} --> tcpdump -i any port ${socket.localPort}`.cliBoja('blue'));
 
 
         this.eventEmitter.emit('connected', socket);
@@ -273,6 +276,8 @@ class Client13jsonRWS extends DataParser {
         msgBUFarr.push(msgBUFchunk);
         let msgBUF = Buffer.concat(msgBUFarr);
         let msgSTR = this.incoming(msgBUF); // convert buffer to string
+        // console.log(JSON.stringify([...msgBUF], null, 4));
+        this._debugger('Received::', msgSTR);
 
         let msg;
         if (/OPCODE 0x/.test(msgSTR)) {
@@ -319,11 +324,11 @@ class Client13jsonRWS extends DataParser {
       console.log('Opcode 0x8: Server closed the websocket connection'.cliBoja('yellow'));
       this.eventEmitter.emit('closed-by-server', msgSTR);
     } else if (msgSTR === 'OPCODE 0x9 PING') {
-      this.debugger('Opcode 0x9: PING received');
+      this._debugger('Opcode 0x9: PING received');
       this.eventEmitter.emit('ping', msgSTR);
       this.pong(); // send PONG to the server
     } else if (msgSTR === 'OPCODE 0xA PONG') {
-      this.debugger('Opcode 0xA: PONG received');
+      this._debugger('Opcode 0xA: PONG received');
       this.eventEmitter.emit('pong', msgSTR);
     }
   }
@@ -335,41 +340,28 @@ class Client13jsonRWS extends DataParser {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
-   * @return {object} message object {id, from, to, cmd, payload}
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async carryOut(to, cmd, payload) {
-    // DDoS protection (protect from sending too many messages in short period time)
-    const autodelay = await new Promise((resolve, reject) => {
-      let ms = 0;
-      const startTime = process.hrtime(); // time when event loop tick strted
-      process.nextTick(() => {
-        const diff = process.hrtime(startTime); // the difference between time when event loop tick started and ended
-        const ns = diff[0] * 1e9 + diff[1]; // nanoseconds
-        ms = ns / 1000000; // miliseconds
-        if (ms > 100) { resolve(-1); }
-        if (ms > 10) { resolve(-2); }
-        else { resolve(ms * 1000); }
-      });
-    });
-    this.debugger(`autodelay: ${autodelay}`.cliBoja('yellow'));
-    if (autodelay === -1) { this.debugger(`DDoS attack - disconnect the client`.cliBoja('red')); this.disconnect(); process.exit(); }
-    if (autodelay === -2) { this.debugger(`DDoS attack - block message`.cliBoja('red')); return; }
-    else { await new Promise(r => setTimeout(r, autodelay)); }
-
     const id = helper.generateID(); // the message ID
     const from = this.socketID; // the sender ID
-    if (!to) { to = '0'; } // server ID is 0
+
+    if (!Array.isArray(to) && typeof to !== 'string') {
+      throw new Error('ERRcarryOut: "to" argument must be string');
+    } else if (Array.isArray(to)) {
+      for (const t of to) {
+        if (typeof t !== 'string') { throw new Error('ERRcarryOut: "to" argument must be string'); }
+      }
+    }
+
     const msg = { id, from, to, cmd, payload };
     const msgSTR = jsonRWS.outgoing(msg);
+    const msgBUF = this.outgoing(msgSTR, 1);
+    await this.socketWrite(msgBUF);
 
-    // the message must be defined and client must be connected to the server
-    if (!!msgSTR) {
-      const msgBUF = this.outgoing(msgSTR, 1);
-      await this.socketWrite(msgBUF);
-      return msg;
-    } else {
-      this.debugger('The message is not defined.');
-    }
+    this._debugger('Sent::', msgSTR);
+
+    return msg;
   }
 
 
@@ -379,58 +371,73 @@ class Client13jsonRWS extends DataParser {
    * @param {Buffer} msgBUF - message to server
    */
   async socketWrite(msgBUF) {
-    if (!!this.socket && this.socket.writable && this.socket.readyState === 'open') {
-      this.socket.write(msgBUF);
-    } else {
-      this.debugger('Socket is not writeble or doesn\'t exist');
-    }
+    // DDoS protection (protect from sending too many messages in short period time). Measure event loop time and define automaticly regulated delay.
+    const autodelay = await new Promise((resolve, reject) => {
+      let ms = 0;
+      const startTime = process.hrtime(); // time when event loop tick strted
+      process.nextTick(() => {
+        const diff = process.hrtime(startTime); // the difference between time when event loop tick started and ended
+        const ns = diff[0] * 1e9 + diff[1]; // nanoseconds
+        ms = ns / 1000000; // miliseconds
+        if (ms > 100) { resolve(-1); }
+        if (ms > 10) { resolve(-2); }
+        else { resolve(ms * this.wcOpts.autodelayFactor); }
+      });
+    });
+    this._debugger(`autodelay: ${autodelay}`.cliBoja('yellow'));
+    if (autodelay === -1) { this._debugger(`DDoS attack - disconnect the client`.cliBoja('red')); this.disconnect(); process.exit(); }
+    if (autodelay === -2) { this._debugger(`DDoS attack - block message`.cliBoja('red')); return; }
+    else { await new Promise(r => setTimeout(r, autodelay)); }
+
+    if (!!this.socket && this.socket.readyState === 'open' && this.socket.writable) { this.socket.write(msgBUF); }
+    else { throw new Error('Socket is not writeble or doesn\'t exist'); }
   }
 
 
   /**
    * Send message (payload) to one client.
    * @param {number} to - 210201164339351900
-   * @param {any} msg - message sent to the client
+   * @param {any} payload - message sent to the client
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async sendOne(to, msg) {
+  async sendOne(to, payload) {
     const cmd = 'socket/sendone';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
   /**
    * Send message (payload) to one or more clients.
    * @param {number[]} to - [210205081923171300, 210205082042463230]
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async send(to, msg) {
+  async send(to, payload) {
     const cmd = 'socket/send';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
   /**
    * Send message (payload) to all clients except the sender.
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async broadcast(msg) {
+  async broadcast(payload) {
     const to = '0';
     const cmd = 'socket/broadcast';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Send message (payload) to all clients and the sender.
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async sendAll(msg) {
+  async sendAll(payload) {
     const to = '0';
     const cmd = 'socket/sendall';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -485,16 +492,18 @@ class Client13jsonRWS extends DataParser {
    * @param {string} cmd - command
    * @returns {Promise<object>}
    */
-  question(cmd) {
+  async question(cmd) {
     // send the question
     const to = this.socketID;
     const payload = undefined;
-    this.carryOut(to, cmd, payload);
+    await this.carryOut(to, cmd, payload);
 
     // receive the answer
     return new Promise(async (resolve, reject) => {
-      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
+      const listener = msg => { if (msg.cmd === cmd) { resolve(msg); } };
+      this.once('question', listener);
       await helper.sleep(this.wcOpts.questionTimeout);
+      this.off('question', listener);
       reject(new Error(`No answer for the question: ${cmd}`));
     });
   }
@@ -542,45 +551,48 @@ class Client13jsonRWS extends DataParser {
   /**
    * Subscribe in the room.
    * @param {string} roomName
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomEnter(roomName) {
     const to = '0';
     const cmd = 'room/enter';
     const payload = roomName;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomExit(roomName) {
     const to = '0';
     const cmd = 'room/exit';
     const payload = roomName;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Unsubscribe from all rooms.
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomExitAll() {
     const to = '0';
     const cmd = 'room/exitall';
     const payload = undefined;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
-   * Send message to the room.
+   * Send message to all clients in the specific room excluding the client who sent the message.
    * @param {string} roomName
-   * @param {any} msg
+   * @param {any} payload
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async roomSend(roomName, msg) {
+  async roomSend(roomName, payload) {
     const to = roomName;
     const cmd = 'room/send';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -589,12 +601,13 @@ class Client13jsonRWS extends DataParser {
   /**
    * Setup a nick name.
    * @param {string} nickname - nick name
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async setNick(nickname) {
     const to = '0';
     const cmd = 'socket/nick';
     const payload = nickname;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -647,26 +660,13 @@ class Client13jsonRWS extends DataParser {
 
 
 
-  /******* OTHER ********/
+  /******* AUX ********/
   /**
-   * Debugger. Use it as this.debugger(var1, var2, var3)
+   * Debugger. Use it as this._debugger(var1, var2, var3)
    */
-  debugger(...textParts) {
+  _debugger(...textParts) {
     const text = textParts.join(' ');
     if (this.wcOpts.debug) { console.log(text.cliBoja('yellow')); }
-  }
-
-
-
-
-  /**
-   * 1) Automatic delay of too fast websocket messages which can cause to block the NodeJS event loop.
-   * 2) Stop DDoS attacks caused by very fast messages. When the event loop tick duration is >10ms.
-   * @param {string} debugTxt - a text which helps to debug
-   * @returns {boolean} - if false block the message
-   */
-  async _autodelay(debugTxt) {
-
   }
 
 
