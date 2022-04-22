@@ -35,7 +35,7 @@ class DataTransfer {
   carryIn(socket) {
     let msgBUFarr = [];
 
-    socket.on('data', async msgBUFchunk => {
+    socket.on('data', msgBUFchunk => {
 
       try {
         // console.log('msgBUFchunk::', msgBUFchunk.length, msgBUFchunk.toString('hex').match(/../g).join(' '));
@@ -44,20 +44,19 @@ class DataTransfer {
         let msgSTR = this.dataParser.incoming(msgBUF); // convert incoming buffer message to string
 
         let msg;
-        if (/OPCODE 0x/.test(msgSTR)) {
-          this.opcodes(msgSTR, socket);
-        } else {
+        if (msgSTR.indexOf('OPCODE 0x') === -1) {
           /**
            * Test if the message contains the delimiter.
            * Delimiter is important because the network is splitting large message in the chunks of data so we need to know when the message reached the end and new message is starting.
            * A TCP network chunk is around 1500 bytes. To check it use linux command: $ ifconfig | grep -i MTU
            * Related terms are TCP MTU (Maximum Transmission Unit) and TCP MSS (Maximum Segment Size) --> (MSS = MTU - TCPHdrLen - IPHdrLen)
            */
-          const delimiter_reg = new RegExp(this.subprotocolLib.delimiter);
-          if (!delimiter_reg.test(msgSTR)) { return; }
-
+          if (msgSTR.indexOf(this.subprotocolLib.delimiter) === -1) { return; }
           msg = this.subprotocolLib.incoming(msgSTR); // convert the string message to format defined by the subprotocol
-          this.subprotocolLib.process(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
+          this.subprotocolLib.processing(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
+
+        } else {
+          this.opcodes(msgSTR, socket);
         }
 
         // emit the message
@@ -114,16 +113,42 @@ class DataTransfer {
    * @returns {void}
    */
   async carryOut(msg, socket) {
-    try {
-      const msgSTR = this.subprotocolLib.outgoing(msg); // convert outgoing message to string
-      const msgBUF = this.dataParser.outgoing(msgSTR, 0); // convert string to buffer
-      if (!!socket && socket.readable) { socket.write(msgBUF); } // send buffer message to the client
-      else { throw new Error(`Socket is not defined or not writable ! msg: ${msgSTR}`); }
-      await new Promise(r => setTimeout(r, 34)); // slow down consecutive sending
-    } catch (err) {
-      const socketID = !!socket && !!socket.extension ? socket.extension.id : 'BAD SOCKET';
-      console.log(`DataTransfer.carryOut:: socketID: ${socketID}, WARNING: ${err.message}`.cliBoja('yellow'));
-      // socket.destroy();
+    const msgSTR = this.subprotocolLib.outgoing(msg); // convert outgoing message to string
+    const msgBUF = this.dataParser.outgoing(msgSTR, 0); // convert string to buffer
+    await this.socketWrite(msgBUF, msgSTR, socket);
+  }
+
+
+  /**
+   * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
+   * and send message in buffer format.
+   * @param {Buffer} msgBUF - message to server
+   */
+  async socketWrite(msgBUF, msgSTR, socket) {
+    // DDoS protection (protect from sending too many messages in short period time). Measure event loop time and define automaticaly regulated delay
+    const autodelay = await new Promise((resolve, reject) => {
+      let ms = 0;
+      const startTime = process.hrtime(); // time when event loop tick strted
+      process.nextTick(() => { // or setImmediate instead of process.nextTick
+        const diff = process.hrtime(startTime); // the difference between time when event loop tick started and ended
+        const ns = diff[0] * 1e9 + diff[1]; // nanoseconds
+        ms = ns / 1000000; // miliseconds
+        if (ms > 100) { resolve(-1); } // extremly slow event loop
+        if (ms > 10) { resolve(-2); } // very slow event loop
+        else { resolve(ms * this.wsOpts.autodelayFactor); } // normal operating event loop
+      });
+    });
+    if (autodelay === -1) { console.log(`DDoS attack - the client socket "${socket.extension.id}" is disconnected and removed `.cliBoja('red')); socket.extension.removeSocket(); }
+    if (autodelay === -2) { console.log(`DDoS attack - the socket "${socket.extension.id}" message is blocked: ${msgSTR}`.cliBoja('red')); return; }
+    else { await new Promise(r => setTimeout(r, autodelay)); }
+    // console.log(`autodelay: ${autodelay}`.cliBoja('yellow'));
+
+    if (!!socket && socket.writable) { socket.write(msgBUF); }
+    else {
+      const socketID = !!socket && !!socket.extension ? socket.extension.id : 'BADid';
+      const warnMsg = `Socket "${socketID}" is not defined or not writable ! msg: ${msgSTR}`;
+      console.log(warnMsg.cliBoja('yellow'));
+      this.eventEmitter.emit('message-error', new Error(warnMsg));
     }
   }
 

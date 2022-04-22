@@ -25,6 +25,7 @@ class RWServer {
         storage: 'memory', // socket storage type
         subprotocol: 'jsonRWS', // protocol used in the server
         tightening: 400, // delays in the code execution
+        autodelayFactor: 500, // factor for preventing DDoS, bigger then sending messages works slower
         version: 13, // websocket version
         debug: false // debug incoming and outgoing messages
       };
@@ -36,6 +37,7 @@ class RWServer {
       if (!wsOpts.storage) { throw new Error('Option "storage" is not defined. ("storage": "memory")'); }
       if (!wsOpts.subprotocol) { throw new Error('Option "subprotocol" is not defined. ("subprotocol": "jsonRWS")'); }
       if (wsOpts.tightening !== 0 && !wsOpts.tightening) { wsOpts.tightening = 400; }
+      if (wsOpts.autodelayFactor !== 0 && !wsOpts.autodelayFactor) { wsOpts.autodelayFactor = 500; }
       if (!wsOpts.version) { wsOpts.version = 13; }
     }
     this.wsOpts = wsOpts;
