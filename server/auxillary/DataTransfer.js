@@ -54,13 +54,10 @@ class DataTransfer {
           if (msgSTR.indexOf(this.subprotocolLib.delimiter) === -1) { return; }
           msg = this.subprotocolLib.incoming(msgSTR); // convert the string message to format defined by the subprotocol
           this.subprotocolLib.processing(msg, socket, this, this.socketStorage, this.eventEmitter); // process message internally
-
+          this.eventEmitter.emit('message', msg, msgSTR, msgBUF, socket); // emit the message which can be caught by rws.on('message', ...)
         } else {
           this.opcodes(msgSTR, socket);
         }
-
-        // emit the message
-        this.eventEmitter.emit('message', msg, msgSTR, msgBUF, socket);
 
         // reset
         msgBUFarr = [];
