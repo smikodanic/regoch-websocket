@@ -17,7 +17,6 @@ setTimeout(() => {
 
 
 
-// websocket ultra
 const wsOpts = {
   timeout: 5 * 60 * 1000,
   maxConns: 5,
@@ -25,6 +24,7 @@ const wsOpts = {
   storage: 'memory',
   subprotocol: 'raw',
   tightening: 100,
+  autodelayFactor: 500,
   version: 13,
   debug: true
 };

@@ -27,29 +27,30 @@ httpServer.on('error', (error) => {
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
-  case 'EACCES':
-    console.error(bind + ' requires elevated privileges');
-    console.error(error);
-    process.exit(1);
-    break;
-  case 'EADDRINUSE':
-    console.error(bind + ' is already in use');
-    process.exit(1);
-    break;
-  default:
-    throw error;
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      console.error(error);
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
   }
 });
 
 
 // init the websocket server
 const wsOpts = {
-  timeout: 5*60*1000,
+  timeout: 5 * 60 * 1000,
   maxConns: 5,
   maxIPConns: 3,
   storage: 'memory',
   subprotocol: 'jsonRWS',
   tightening: 100,
+  autodelayFactor: 500,
   version: 13,
   debug: false
 };

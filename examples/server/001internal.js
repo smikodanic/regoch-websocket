@@ -4,7 +4,7 @@
 const { RWServer, RWHttpServer } = require('../../index.js');
 
 const Router = require('regoch-router');
-const router = new Router({debug: false});
+const router = new Router({ debug: false });
 
 
 // start internal HTTP server
@@ -23,12 +23,13 @@ setTimeout(() => {
 
 // websocket ultra
 const wsOpts = {
-  timeout: 5*60*1000,
+  timeout: 5 * 60 * 1000,
   maxConns: 5,
   maxIPConns: 3,
   storage: 'memory',
   subprotocol: 'jsonRWS',
   tightening: 100,
+  autodelayFactor: 500,
   version: 13,
   debug: false
 };
@@ -66,7 +67,8 @@ rws.on('connection', async socket => {
 
 /*** all messages stream ***/
 rws.on('message', msg => {
-  console.log('\nmessageStream::', msg);
+  // console.log('\nmessageStream::', msg);
+  console.log('on message::', msg.payload);
 });
 
 
@@ -95,8 +97,8 @@ rws.on('route', (msgObj, socket, dataTransfer, socketStorage, eventEmitter) => {
     const from = 0;
     const to = trx.msgObj.from;
     const cmd = 'route';
-    const payload = {uri: '/returned/back/21', body: {x: 'something', y:28}};
-    const msg = {id, from, to, cmd, payload};
+    const payload = { uri: '/returned/back/21', body: { x: 'something', y: 28 } };
+    const msg = { id, from, to, cmd, payload };
     rws.dataTransfer.sendOne(msg, trx.socket);
   }); // send new route back to the client
   router.notfound((trx) => { console.log(`The URI not found: ${trx.uri}`); });
@@ -104,7 +106,7 @@ rws.on('route', (msgObj, socket, dataTransfer, socketStorage, eventEmitter) => {
   // execute the router
   router.exe().catch(err => {
     console.log(err);
-    rws.dataTransfer.sendOne({cmd: 'error', payload: err.stack}, socket);
+    rws.dataTransfer.sendOne({ cmd: 'error', payload: err.stack }, socket);
   });
 
 });
