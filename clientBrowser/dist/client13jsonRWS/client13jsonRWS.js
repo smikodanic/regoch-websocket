@@ -16,7 +16,18 @@ class Client13jsonRWS {
    * @param {{wsURL:string, questionTimeout:number, reconnectAttempts:number, reconnectDelay:number, subprotocols:string[], debug:boolean}} wcOpts - websocket client options
    */
   constructor(wcOpts) {
-    this.wcOpts = wcOpts; // websocket client options
+    // websocket client default options
+    this.wcOpts = wcOpts;
+    if (!wcOpts.wsURL || !/^ws:\/\//.test(wcOpts.wsURL)) { throw new Error('Bad websocket URL'); } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    if (!wcOpts.connectTimeout) { this.wcOpts.connectTimeout = 8000; } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    if (!wcOpts.reconnectAttempts) { this.wcOpts.reconnectAttempts = 5; } // how many times to try to reconnect when connection with the server is lost
+    if (!wcOpts.reconnectDelay) { this.wcOpts.reconnectDelay = 3000; } // delay between reconnections, default is 3 seconds
+    if (!wcOpts.questionTimeout) { this.wcOpts.questionTimeout = 3000; } // how many mss to wait for the answer when question is sent
+    if (!wcOpts.subprotocols) { this.wcOpts.subprotocols = ['jsonRWS', 'raw']; } // list of the supported subprotocols
+    if (!wcOpts.autodelayFactor) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
+    if (!wcOpts.debug) { this.wcOpts.debug = false; }
+    if (!wcOpts.debug_DataParser) { this.wcOpts.debug_DataParser = false; } // ws message level debugging
+
     this.wsocket; // Websocket instance https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
     this.socketID; // socket ID number, for example: 20210214082949459100
     this.attempt = 1; // reconnect attempt counter
@@ -130,7 +141,7 @@ class Client13jsonRWS {
     this.wsocket.addEventListener('message', event => {
       try {
         const msgSTR = event.data;
-        this.debugger('Received::', msgSTR);
+        this._debugger('Received::', msgSTR);
 
         /**
            * Test if the message contains the delimiter.
@@ -164,71 +175,87 @@ class Client13jsonRWS {
    * @param {number|number[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
-   * @return {object} message object {id, from, to, cmd, payload}
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async carryOut(to, cmd, payload) {
     const id = helper.generateID(); // the message ID
     const from = this.socketID; // the sender ID
-    if (!to) { to = '0'; } // server ID is 0
-    const msgObj = { id, from, to, cmd, payload };
-    const msg = jsonRWS.outgoing(msgObj);
-    this.debugger('Sent::', msg);
 
-    // the message must be defined and client must be connected to the server
-    if (!!msg && !!this.wsocket && this.wsocket.readyState === 1) {
-      await new Promise(r => setTimeout(r, 0));
-      await this.wsocket.send(msg);
-      return msg;
-    } else {
-      throw new Error('The message is not defined or the client is disconnected.');
+    // test if "to" is string
+    if (!Array.isArray(to) && typeof to !== 'string') {
+      throw new Error('ERRcarryOut: "to" argument must be string');
+    } else if (Array.isArray(to)) {
+      for (const t of to) {
+        if (typeof t !== 'string') { throw new Error('ERRcarryOut: "to" argument must be string'); }
+      }
     }
+
+    const msg = { id, from, to, cmd, payload };
+    const msgSTR = jsonRWS.outgoing(msg);
+    await this.socketWrite(msgSTR);
+
+    this._debugger('Sent::', msgSTR);
+
+    return msg;
+  }
+
+
+  /**
+   * Check if socket is writable and not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState)
+   * and send message in string format.
+   * @param {Buffer} msgSTR - message to server
+   */
+  async socketWrite(msgSTR) {
+    await new Promise(r => setTimeout(r, 0));
+    if (!!this.wsocket && this.wsocket.readyState === 1) { this.wsocket.send(msgSTR); }
+    else { throw new Error('Socket is not writeble or doesn\'t exist'); }
   }
 
 
   /**
    * Send message (payload) to one client.
    * @param {number} to - 210201164339351900
-   * @param {any} msg - message sent to the client
+   * @param {any} payload - message sent to the client
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async sendOne(to, msg) {
+  async sendOne(to, payload) {
     const cmd = 'socket/sendone';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
   /**
    * Send message (payload) to one or more clients.
    * @param {number[]} to - [210205081923171300, 210205082042463230]
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async send(to, msg) {
+  async send(to, payload) {
     const cmd = 'socket/send';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
   /**
    * Send message (payload) to all clients except the sender.
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async broadcast(msg) {
+  async broadcast(payload) {
     const to = '0';
     const cmd = 'socket/broadcast';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Send message (payload) to all clients and the sender.
-   * @param {any} msg - message sent to the clients
+   * @param {any} payload - message sent to the clients
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async sendAll(msg) {
+  async sendAll(payload) {
     const to = '0';
     const cmd = 'socket/sendall';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -241,16 +268,18 @@ class Client13jsonRWS {
    * @param {string} cmd - command
    * @returns {Promise<object>}
    */
-  question(cmd) {
+  async question(cmd) {
     // send the question
     const to = this.socketID;
     const payload = undefined;
-    this.carryOut(to, cmd, payload);
+    await this.carryOut(to, cmd, payload);
 
     // receive the answer
     return new Promise(async (resolve, reject) => {
-      this.once('question', msg => { if (msg.cmd === cmd) { resolve(msg); } });
+      const listener = msg => { if (msg.cmd === cmd) { resolve(msg); } };
+      this.once('question', listener);
       await helper.sleep(this.wcOpts.questionTimeout);
+      this.off('question', listener);
       reject(new Error(`No answer for the question: ${cmd}`));
     });
   }
@@ -300,45 +329,48 @@ class Client13jsonRWS {
   /**
    * Subscribe in the room.
    * @param {string} roomName
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomEnter(roomName) {
     const to = '0';
     const cmd = 'room/enter';
     const payload = roomName;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Unsubscribe from the room.
    * @param {string} roomName
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomExit(roomName) {
     const to = '0';
     const cmd = 'room/exit';
     const payload = roomName;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
    * Unsubscribe from all rooms.
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
   async roomExitAll() {
     const to = '0';
     const cmd = 'room/exitall';
     const payload = undefined;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
   /**
-   * Send message to the room.
+   * Send message to all clients in the specific room excluding the client who sent the message.
    * @param {string} roomName
-   * @param {any} msg
+   * @param {any} payload
+   * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
-  async roomSend(roomName, msg) {
+  async roomSend(roomName, payload) {
     const to = roomName;
     const cmd = 'room/send';
-    const payload = msg;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -353,7 +385,7 @@ class Client13jsonRWS {
     const to = '0';
     const cmd = 'socket/nick';
     const payload = nickname;
-    await this.carryOut(to, cmd, payload);
+    return await this.carryOut(to, cmd, payload);
   }
 
 
@@ -412,15 +444,14 @@ class Client13jsonRWS {
 
 
 
-  /******* OTHER ********/
+  /******* AUX ********/
   /**
-   * Debugger. Use it as this.debug(var1, var2, var3)
+   * Debugger. Use it as this._debugger(var1, var2, var3)
    */
-  debugger(...textParts) {
+  _debugger(...textParts) {
     const text = textParts.join('');
     if (this.wcOpts.debug) { console.log(text); }
   }
-
 
 
 
@@ -429,7 +460,7 @@ class Client13jsonRWS {
 
 
 
-// NodeJS
+// NodeJS (browserify)
 if (typeof module !== 'undefined') {
   module.exports = Client13jsonRWS;
 }
@@ -708,6 +739,7 @@ module.exports = new Helper();
  *  a) Client have to send message in valid JSON format. Allowed fields: id, from, to, cmd, payload.
  *  b) Server have to send message in valid JSON format. Allowed fields: id, from, to, cmd, payload.
  *  c) The message is converted from string to object.
+ *  d) The data type definition of the sent object: {id:string, from:string, to:string, cmd:string, payload?:any}
  */
 
 
@@ -774,7 +806,7 @@ class JsonRWS {
    * @param {SocketStorage} socketStorage - instance of the SockketStorage
    * @param {EventEmitter} eventEmitter - event emitter initiated in the RWS.js
    */
-  async process(msg, socket, dataTransfer, socketStorage, eventEmitter) {
+  async processing(msg, socket, dataTransfer, socketStorage, eventEmitter) {
     const id = msg.id;
     const from = msg.from;
     const to = msg.to;
@@ -787,24 +819,24 @@ class JsonRWS {
       // {id: '20210129163129492000', from: '20210129163129492111', to: '20210201164339351900', cmd: 'socket/sendone', payload: 'Some message to another client'}
       const id = msg.to;
       const toSocket = await socketStorage.findOne({ id });
-      dataTransfer.sendOne(msg, toSocket);
+      await dataTransfer.sendOne(msg, toSocket);
     }
 
     else if (cmd === 'socket/send') {
-      // {id: '20210129163129492000', from: '20210129163129492111', to: ['20210201164339351900', 210201164339351901], cmd: 'socket/send', payload: 'Some message to another client(s)'}
-      const socketIDs = to.map(socketID => +socketID); // convert to numbers
+      // {id: '20210129163129492000', from: '20210129163129492111', to: ['20210201164339351900', '210201164339351901'], cmd: 'socket/send', payload: 'Some message to another client(s)'}
+      const socketIDs = to.map(socketID => socketID); // convert to numbers
       const sockets = await socketStorage.find({ id: { $in: socketIDs } });
-      dataTransfer.send(msg, sockets);
+      await dataTransfer.send(msg, sockets);
     }
 
     else if (cmd === 'socket/broadcast') {
       // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'socket/broadcast', payload: 'Some message to all clients except the sender'}
-      dataTransfer.broadcast(msg, socket);
+      await dataTransfer.broadcast(msg, socket);
     }
 
     else if (cmd === 'socket/sendall') {
       // {id: '20210129163129492000', from: '20210129163129492111', to: '0', cmd: 'socket/sendall', payload: 'Some message to all clients and the sender'}
-      dataTransfer.sendAll(msg);
+      await dataTransfer.sendAll(msg);
     }
 
     else if (cmd === 'socket/nick') {
@@ -848,7 +880,7 @@ class JsonRWS {
     else if (cmd === 'room/send') {
       // {id: '20210129163129492000', from: '20210129163129492111', to: 'My Chat Room', cmd: 'room/send', payload: 'Some message to room clients.'}
       const roomName = to;
-      dataTransfer.sendRoom(msg, socket, roomName);
+      await dataTransfer.sendRoom(msg, socket, roomName);
     }
 
 

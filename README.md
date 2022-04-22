@@ -32,7 +32,7 @@ npm install --save regoch-websocket
 - chat,  rooms
 - PING & PONG
 - small file size
-- very fast and reliable data transfer
+- very fast and reliable data transfer (use it directly in the "for" loop)
 - **no npm dependencies**
 - powerful API
 - easy RxJS integration

@@ -346,6 +346,7 @@ class Client13jsonRWS extends DataParser {
     const id = helper.generateID(); // the message ID
     const from = this.socketID; // the sender ID
 
+    // test if "to" is string
     if (!Array.isArray(to) && typeof to !== 'string') {
       throw new Error('ERRcarryOut: "to" argument must be string');
     } else if (Array.isArray(to)) {

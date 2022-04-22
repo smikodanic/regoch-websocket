@@ -65,8 +65,8 @@ class TestClient extends window.regochWebsocket.Client13jsonRWS {
   }
 
   async send_test() {
-    const tos = document.getElementById('to2').value; // string 210205081923171300, 210205082042463230
-    const to = tos.split(',').map(to => +to); // array of numbers [210205081923171300, 210205082042463230]
+    const tos = document.getElementById('to2').value; // string '210205081923171300, 210205082042463230'
+    const to = tos.split(',').map(to => to.trim()); // array of strings ['210205081923171300', '210205082042463230']
     const payload = document.getElementById('payload2').value;
     await this.send(to, payload);
   }
