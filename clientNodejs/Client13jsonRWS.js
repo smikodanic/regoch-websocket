@@ -337,7 +337,7 @@ class Client13jsonRWS extends DataParser {
   /************* SENDERS ************/
   /**
    * Send message to the websocket server after the message is processed by subprotocol and DataParser.
-   * @param {number|number[]} to - final destination: 210201164339351900
+   * @param {string|string[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
    * @return {object} full websocket message object {id, from, to, cmd, payload}
@@ -397,7 +397,7 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Send message (payload) to one client.
-   * @param {number} to - 210201164339351900
+   * @param {string} to - 210201164339351900
    * @param {any} payload - message sent to the client
    * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
@@ -409,7 +409,7 @@ class Client13jsonRWS extends DataParser {
 
   /**
    * Send message (payload) to one or more clients.
-   * @param {number[]} to - [210205081923171300, 210205082042463230]
+   * @param {string[]} to - [210205081923171300, 210205082042463230]
    * @param {any} payload - message sent to the clients
    * @return {object} full websocket message object {id, from, to, cmd, payload}
    */

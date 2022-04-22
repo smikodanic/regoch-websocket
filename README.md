@@ -6,9 +6,9 @@ Small but very powerful, websocket library made according to [RFC6455 Standard](
 Current websocket version: *13*
 
 Library parts:
-- **Regoch Websocket Server (NodeJS)**
-- **Regoch Websocket Client (NodeJS)**
-- **Regoch Websocket Client (Browser)**
+- **[Regoch Websocket Server (NodeJS)](https://github.com/smikodanic/regoch-websocket/tree/master/server)**
+- **[Regoch Websocket Client (NodeJS)](https://github.com/smikodanic/regoch-websocket/tree/master/clientNodejs)**
+- **[Regoch Websocket Client (Browser)](https://github.com/smikodanic/regoch-websocket/tree/master/clientBrowser)**
 - *Regoch Websocket Client (Angular) - ToDo*
 - *Regoch Websocket Client (React) - ToDo*
 - *Regoch Websocket Client (Vue) - ToDo*
@@ -23,7 +23,7 @@ npm install --save regoch-websocket
 
 
 ## Website
-[www.regoch.org](http://www.regoch.org)
+Visit the website [www.regoch.org](http://www.regoch.org) for more information !
 
 
 ## Websocket Server Features
@@ -39,15 +39,19 @@ npm install --save regoch-websocket
 
 
 ## subprotocol "jsonRWS"
-Basic subprotocol for message exchange between server & client is the **jsonRWS** &copy; subprotocol. It's the new, invented websocket subprotocol.
+Basic subprotocol for message exchange between server & client is the **jsonRWS** &copy; subprotocol. It is the websocket subprotocol invented by the Regoch.org project.
 
 *Subprotocol description:*
 The subprotocol is created for communication between websocket server and client.
 
 *Subprotocol definitons:*
+
 a) Client have to send message in valid JSON format. Fields: **{id:string, from:string, to:string|string[], cmd:string, payload?:any}**
+
 b) Server have to send message in valid JSON format. Fields: **{id:string, from:string, to:string|string[], cmd:string, payload?:any}**
+
 c) The incoming message is converted from string to object.
+
 d) The outgoing message is converted from object to string.
 
 

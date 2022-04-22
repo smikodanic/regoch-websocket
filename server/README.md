@@ -28,7 +28,7 @@ npm install --save regoch-websocket-server
 
 
 ## Website
-[www.regoch.org](http://www.regoch.org/websocket-server)
+[http://www.regoch.org/websocket/server](http://www.regoch.org/websocket/server)
 
 
 
@@ -44,9 +44,3 @@ $ nodemon examples/001internal.js
 Use *tcpdump* command to debug the messages sent from the server to the client.
 For example ```sudo tcpdump -i any port 8000 -X -s0``` where 8000 is the server port.
 
-
-
-### Licence
-“Freely you received, freely you give”, Matthew 10:5-8
-
-Copyright (c) 2020 Saša Mikodanić licensed under [MIT](./LICENSE) .
