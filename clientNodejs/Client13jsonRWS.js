@@ -25,12 +25,12 @@ class Client13jsonRWS extends DataParser {
     // websocket client default options
     this.wcOpts = wcOpts;
     if (!wcOpts.wsURL || !/^ws:\/\//.test(wcOpts.wsURL)) { throw new Error('Bad websocket URL'); } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
-    if (!wcOpts.connectTimeout) { this.wcOpts.connectTimeout = 8000; } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
-    if (!wcOpts.reconnectAttempts) { this.wcOpts.reconnectAttempts = 6; } // how many times to try to reconnect when connection with the server is lost
-    if (!wcOpts.reconnectDelay) { this.wcOpts.reconnectDelay = 5000; } // delay between reconnections, default is 3 seconds
-    if (!wcOpts.questionTimeout) { this.wcOpts.questionTimeout = 13000; } // how many mss to wait for the answer when question is sent
+    if (wcOpts.connectTimeout === undefined) { this.wcOpts.connectTimeout = 8000; } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+    if (wcOpts.reconnectAttempts === undefined) { this.wcOpts.reconnectAttempts = 6; } // how many times to try to reconnect when connection with the server is lost
+    if (wcOpts.reconnectDelay === undefined) { this.wcOpts.reconnectDelay = 5000; } // delay between reconnections, default is 3 seconds
+    if (wcOpts.questionTimeout === undefined) { this.wcOpts.questionTimeout = 13000; } // how many mss to wait for the answer when question is sent
     if (!wcOpts.subprotocols) { this.wcOpts.subprotocols = ['jsonRWS', 'raw']; } // list of the supported subprotocols
-    if (!wcOpts.autodelayFactor) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
+    if (wcOpts.autodelayFactor === undefined) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
     if (!wcOpts.debug) { this.wcOpts.debug = false; }
     if (!wcOpts.debug_DataParser) { this.wcOpts.debug_DataParser = false; } // ws message level debugging
 
@@ -636,7 +636,7 @@ class Client13jsonRWS extends DataParser {
    * @param {Function} listener - callback function
    */
   on(eventName, listener) {
-    return this.eventEmitter.on(eventName, listener);
+    this.eventEmitter.on(eventName, listener);
   }
 
   /**
@@ -645,7 +645,7 @@ class Client13jsonRWS extends DataParser {
    * @param {Function} listener - callback function
    */
   once(eventName, listener) {
-    return this.eventEmitter.once(eventName, listener);
+    this.eventEmitter.once(eventName, listener);
   }
 
   /**
@@ -654,7 +654,7 @@ class Client13jsonRWS extends DataParser {
    * @param {Function} listener - callback function
    */
   off(eventName, listener) {
-    return this.eventEmitter.off(eventName, listener);
+    this.eventEmitter.off(eventName, listener);
   }
 
 
