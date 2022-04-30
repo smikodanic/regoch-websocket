@@ -20,11 +20,11 @@ class Client13jsonRWS {
     this.wcOpts = wcOpts;
     if (!wcOpts.wsURL || !/^ws:\/\//.test(wcOpts.wsURL)) { throw new Error('Bad websocket URL'); } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
     if (!wcOpts.connectTimeout) { this.wcOpts.connectTimeout = 8000; } // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
-    if (!wcOpts.reconnectAttempts) { this.wcOpts.reconnectAttempts = 5; } // how many times to try to reconnect when connection with the server is lost
-    if (!wcOpts.reconnectDelay) { this.wcOpts.reconnectDelay = 3000; } // delay between reconnections, default is 3 seconds
-    if (!wcOpts.questionTimeout) { this.wcOpts.questionTimeout = 3000; } // how many mss to wait for the answer when question is sent
+    if (wcOpts.reconnectAttempts === undefined) { this.wcOpts.reconnectAttempts = 6; } // how many times to try to reconnect when connection with the server is lost
+    if (wcOpts.reconnectDelay === undefined) { this.wcOpts.reconnectDelay = 5000; } // delay between reconnections, default is 3 seconds
+    if (wcOpts.questionTimeout === undefined) { this.wcOpts.questionTimeout = 13000; } // how many mss to wait for the answer when question is sent
     if (!wcOpts.subprotocols) { this.wcOpts.subprotocols = ['jsonRWS', 'raw']; } // list of the supported subprotocols
-    if (!wcOpts.autodelayFactor) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
+    // if (wcOpts.autodelayFactor === undefined) { this.wcOpts.autodelayFactor = 500; } // factor for preventing DDoS, bigger then sending messages works slower
     if (!wcOpts.debug) { this.wcOpts.debug = false; }
     if (!wcOpts.debug_DataParser) { this.wcOpts.debug_DataParser = false; } // ws message level debugging
 
@@ -172,7 +172,7 @@ class Client13jsonRWS {
   /************* SENDERS ************/
   /**
    * Send message to the websocket server if the connection is not closed (https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState).
-   * @param {number|number[]} to - final destination: 210201164339351900
+   * @param {string|string[]} to - final destination: 210201164339351900
    * @param {string} cmd - command
    * @param {any} payload - message payload
    * @return {object} full websocket message object {id, from, to, cmd, payload}
@@ -214,7 +214,7 @@ class Client13jsonRWS {
 
   /**
    * Send message (payload) to one client.
-   * @param {number} to - 210201164339351900
+   * @param {string} to - 210201164339351900
    * @param {any} payload - message sent to the client
    * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
@@ -226,7 +226,7 @@ class Client13jsonRWS {
 
   /**
    * Send message (payload) to one or more clients.
-   * @param {number[]} to - [210205081923171300, 210205082042463230]
+   * @param {string[]} to - [210205081923171300, 210205082042463230]
    * @param {any} payload - message sent to the clients
    * @return {object} full websocket message object {id, from, to, cmd, payload}
    */
