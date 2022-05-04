@@ -387,8 +387,9 @@ class Client13jsonRWS extends DataParser {
     });
     this._debugger(`autodelay: ${autodelay}`.cliBoja('yellow'));
     if (autodelay === -1) { this._debugger(`DDoS attack - disconnect the client`.cliBoja('red')); this.disconnect(); process.exit(); }
-    if (autodelay === -2) { this._debugger(`DDoS attack - block message`.cliBoja('red')); return; }
+    else if (autodelay === -2) { this._debugger(`DDoS attack - block message`.cliBoja('red')); return; }
     else { await new Promise(r => setTimeout(r, autodelay)); }
+    // console.log('autodelay::', autodelay);
 
     if (!!this.socket && this.socket.readyState === 'open' && this.socket.writable) { this.socket.write(msgBUF); }
     else { throw new Error('Socket is not writeble or doesn\'t exist'); }

@@ -2,6 +2,10 @@ const { EventEmitter } = require('events');
 const eventEmitter = new EventEmitter();
 eventEmitter.setMaxListeners(8);
 
+process.nextTick(() => {
+  console.log('Main START');
+});
+
 
 eventEmitter.on('mojEVT', msg => {
   console.log(msg);
@@ -30,5 +34,9 @@ setTimeout(() => {
 
 setImmediate(() => {
   eventEmitter.emit('mojEVT', 'Immediate ...');
+});
+
+process.nextTick(() => {
+  console.log('Main END');
 });
 

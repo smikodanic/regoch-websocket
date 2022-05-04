@@ -130,14 +130,10 @@ class DataTransfer {
         const diff = process.hrtime(startTime); // the difference between time when event loop tick started and ended
         const ns = diff[0] * 1e9 + diff[1]; // nanoseconds
         ms = ns / 1000000; // miliseconds
-        if (ms > 100) { resolve(-1); } // extremly slow event loop
-        if (ms > 10) { resolve(-2); } // very slow event loop
-        else { resolve(ms * this.wsOpts.autodelayFactor); } // normal operating event loop
+        resolve(ms * this.wsOpts.autodelayFactor); // normal operating event loop
       });
     });
-    if (autodelay === -1) { console.log(`DDoS attack - the client socket "${socket.extension.id}" is disconnected and removed `.cliBoja('red')); socket.extension.removeSocket(); }
-    if (autodelay === -2) { console.log(`DDoS attack - the socket "${socket.extension.id}" message is blocked: ${msgSTR}`.cliBoja('red')); return; }
-    else { await new Promise(r => setTimeout(r, autodelay)); }
+    await new Promise(r => setTimeout(r, autodelay));
     // console.log(`autodelay: ${autodelay}`.cliBoja('yellow'));
 
     if (!!socket && socket.writable) { socket.write(msgBUF); }
