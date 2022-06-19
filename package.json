@@ -1,6 +1,6 @@
 {
   "name": "regoch-websocket",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "title": "Regoch Websocket",
   "description": "Websocket server made in NodeJS and websocket clients for NodeJS, Browser and other platforms.",
   "author": "Sasa Mikodanic <smikodanic@gmail.com>",
