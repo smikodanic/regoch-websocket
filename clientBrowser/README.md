@@ -62,9 +62,11 @@ npm run dev   # This command will watch for /src/ file changes and build in /dis
 
 
 ## How to use in pure Javascript ?
-It's very simple. Include *client13jsonRWS-min.js* in your HTML file
+It's very simple. Include *client13jsonRWS.js* in your HTML file
 ```html
-<script src="node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS/client13jsonRWS-min.js"></script>
+<script src="node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
+or
+<script src="https://unpkg.com/regoch-websocket@1.5.2/clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
 ```
 
 and extend your JS class with the *window.regochWebsocket.Client13jsonRWS*.
