@@ -28,7 +28,7 @@ class EventEmitter {
    */
   on(eventName, listener) {
     const listenerWindow = event => {
-      const detailValues = this._getDetailValues(listener, event.detail);
+      const detailValues = this._getDetailValues(event.detail);
       listener.call(null, ...detailValues);
     };
 
@@ -46,7 +46,7 @@ class EventEmitter {
    */
   once(eventName, listener) {
     const listenerWindow = event => {
-      const detailValues = this._getDetailValues(listener, event.detail);
+      const detailValues = this._getDetailValues(event.detail);
       listener.call(null, ...detailValues);
 
       this._removeOne(eventName, listener, listenerWindow);
@@ -116,35 +116,11 @@ class EventEmitter {
 
   /**
    * Get values from the event.detail object
-   * @param {Function} listener - callback function
    * @param {object} detail - event.detail object, for example {msg, msgSTR}
    * @returns {Array} - an array of the detail values (selected by the listener arguments)
    */
-  _getDetailValues(listener, detail) {
-    if (!listener) { throw new Error('eventEmitter._getDetailValues Error: listener is not defined'); }
-    // console.log('\n------ _getDetailValues() ------');
-    // console.log('listener::', listener.toString());
-
-    // get listener function arguments
-    const reg1 = /\((.*)\)\s*\=\>/; // (msg) =>
-    const reg2 = /(.+)\s*\=\>/; // msg =>
-    const reg3 = /function\s*\((.*)\)/; // function(msg)
-
-    const listenerStr = listener.toString();
-
-    let matched = listenerStr.match(reg1);
-    if (!matched) { matched = listenerStr.match(reg2); }
-    if (!matched) { matched = listenerStr.match(reg3); }
-    if (!matched) { console.error(`_getDetailValues Err:: The listener is not valid ! listener:: ${listener.toString()}`); return; }
-
-    // console.log('matched:::', matched);
-    const args_str = matched[1];
-    const args = args_str.split(',').map(arg => arg.trim()); // ['msg', 'msgSTR']
-
-    // get detail values
-    const detailValues = args.map(arg => detail[arg]);
-    // console.log('detailValues:::', detailValues);
-
+  _getDetailValues(detail) {
+    const detailValues = !!detail ? Object.values(detail) : [];
     return detailValues;
   }
 
