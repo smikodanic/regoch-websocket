@@ -3,13 +3,10 @@
 
 Small but very powerful library made according to [RFC6455 Standard](https://www.iana.org/assignments/websocket/websocket.xml) for websocket version 13.
 
-## Installation
-```
-npm install --save regoch-websocket
-```
 
-## Website
-[www.regoch.org](http://www.regoch.org)
+
+## Website Documentation
+[http://www.regoch.org/websocket/clients/browser](http://www.regoch.org/websocket/clients/browser)
 
 
 ## Websocket Client for Browser Features
@@ -20,16 +17,34 @@ npm install --save regoch-websocket
 - small file size, minified (*~7.5kB only*)
 - powerful API
 - possible RxJS integration
-- [browserify](http://browserify.org/)
+- use it with webpack builds
 
 
-
-## Development && Build
-Make changes in the code and run a gulp build:
-```bash
-npm run inst  # Install required gulp packages needed for the development
-npm run dev   # This command will watch for /src/ file changes and build in /dist/ folder by the gulp and browserify
+## Installation
 ```
+npm install --save regoch-websocket
+```
+
+## Howto
+There are two ways to use it in your project:
+- **import in JS**
+```javascript
+import { Client13jsonRWS } from '/node_modules/regoch-websocket/clientBrowser/index.js';
+
+const wsClient = new Client13jsonRWS(wsOpts);
+await wsClient.connect(); // open websocket connection
+```
+
+- **script in HTML**
+```html
+<script src="/node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS.min.js"></script>
+```
+```javascript
+// now fetch it as window.regochWebsocket global variable
+const wsClient = new window.regochWebsocket.Client13jsonRWS(wsOpts);
+await wsClient.connect(); // open websocket connection
+```
+
 
 
 ## API
@@ -61,66 +76,87 @@ npm run dev   # This command will watch for /src/ file changes and build in /dis
 
 
 
-## How to use in pure Javascript ?
-It's very simple. Include *client13jsonRWS.js* in your HTML file
-```html
-<script src="node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
-or
-<script src="https://unpkg.com/regoch-websocket@1.5.2/clientBrowser/dist/client13jsonRWS/client13jsonRWS.js"></script>
-```
-
-and extend your JS class with the *window.regochWebsocket.Client13jsonRWS*.
+## Example
 ```javascript
-class TestClient extends window.regochWebsocket.Client13jsonRWS {
-  constructor(wcOpts) {
-    super(wcOpts);
+import apiwsConst from '/client/conf/apiwsConst.js';
+import { Client13jsonRWS } from '/node_modules/regoch-websocket/clientBrowser/index.js';
+
+
+/**
+ * Websocket client library.
+ */
+class WsLib {
+
+
+  /**
+   * Connect to the websocket server (API)
+   * @param {object} trx - router transitional variable
+   * @returns {void}
+   */
+  async konekt(auth, trx) {
+    if (trx.uri === '/') { return; }
+
+    const ctrl = trx.ctrl; // current controller instance
+
+    // if the client is not connected try to connect to the WS server
+    if (!window.regochGlob.wsClient) {
+      const loggedUser = auth.getLoggedUserInfo();
+      if (!loggedUser) { return; }
+      const wsURL = `${apiwsConst.BASE_URL}?authkey=${apiwsConst.authkey}&clientType=panelUser&user_id=${loggedUser._id}&username=${loggedUser.username}`;
+      const wsOpts = {
+        wsURL,
+        connectTimeout: 8000, // HTTP request timeout i.e. websocket connect timeout (when internet is down or on localhost $ sudo ip link set lo down)
+        reconnectAttempts: 12, // try to reconnect n times
+        reconnectDelay: 5000, // delay between reconnections
+        questionTimeout: 13 * 1000, // wait for answer
+        subprotocols: ['jsonRWS'],
+        debug: false,
+        debug_DataParser: false
+      };
+      // window.regochGlob.wsClient = new window.regochWebsocket.Client13jsonRWS(wsOpts); // app.html --> <script src="/node_modules/regoch-websocket/clientBrowser/dist/client13jsonRWS.min.js"></script>
+      window.regochGlob.wsClient = new Client13jsonRWS(wsOpts);
+
+      await window.regochGlob.wsClient.connect(); // open websocket connection
+    }
+
+
+    // disconnection listener
+    window.regochGlob.wsClient.on('disconnected', () => {
+      // console.log('Websocket is disconnected.');
+      window.regochGlob.wsClient = undefined;
+      ctrl.$model.isWSconnected = false;
+    });
+
+    // update header.html (reused in postflight rend_isWSconnected.js)
+    ctrl.isWSconnected = true;
   }
+
+
+  async dekonekt() {
+    const wsClient = window.regochGlob.wsClient;
+    if (!!wsClient) { wsClient.disconnect(); } // close websocket connection
+    window.regochGlob.wsClient = undefined;
+  }
+
+
 }
 
-const wcOpts = {
-    wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-    connectTimeout: 8000,
-    reconnectAttempts: 6, // try to reconnect n times
-    reconnectDelay: 5000, // delay between reconnections
-    questionTimeout: 13000, // wait for answer
-    subprotocols: ['jsonRWS', 'raw'],
-    autodelayFactor: 500,
-    debug: false,
-    debug_DataParser: false
-  };
 
-const testCB = new TestClient(wcOpts);
+
+export default new WsLib();
+
 ```
 
 
-## How to use in Browserify ?
-If your frontend project is created by the Browserify you can include the client with:
-```javascript
-const { RWClientBrowser } = require('regoch-websocket);
-
-class TestClient extends RWClientBrowser {
-  constructor(wcOpts) {
-    super(wcOpts);
-  }
-}
-
-const wcOpts = {
-  wsURL: 'ws://localhost:3211?authkey=TRTmrt',
-  connectTimeout: 8000,
-  reconnectAttempts: 6, // try to reconnect n times
-  reconnectDelay: 5000, // delay between reconnections
-  questionTimeout: 13000, // wait for answer
-  subprotocols: ['jsonRWS', 'raw'],
-  autodelayFactor: 500,
-  debug: false,
-  debug_DataParser: false
-};
-
-const testCB = new TestClient(wcOpts);
+## Development and Build
+If you want to participate in developing of the library:
+```bash
+$ cd clientBrowser
+$ npm run inst  # Install required gulp packages needed for the development
+$ npm run dev   # This command will watch for /src/ file changes and build in /dist/ folder by the gulp and browserify
 ```
 
-then in your HTML use:
-```html
-<button onclick="testCB.connect()">Connect</button>
-<button onclick="testCB.disconnect()">Disconnect</button>
-```
+
+
+### Licence
+Copyright (c) 2020 Saša Mikodanić licensed under [MIT](../LICENSE) .

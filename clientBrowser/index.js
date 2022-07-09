@@ -1,3 +1,1 @@
-const ClientBrowser = require('./src/Client13jsonRWS');
-
-module.exports = ClientBrowser;
+export {default as Client13jsonRWS} from './src/Client13jsonRWS.js';

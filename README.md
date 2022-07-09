@@ -1,5 +1,5 @@
 # regoch-websocket
-> Websocket server made in NodeJS and websocket clients for NodeJS, Browser and other platforms.
+> Websocket server made in NodeJS and websocket clients for NodeJS and Browser.
 
 Small but very powerful, websocket library made according to [RFC6455 Standard](https://www.iana.org/assignments/websocket/websocket.xml).
 

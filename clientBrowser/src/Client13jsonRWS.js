@@ -3,10 +3,10 @@
  * - websocket version: 13
  * - subprotocol: jsonRWS
  */
-const eventEmitter = require('./auxillary/eventEmitter');
-const jsonRWS = require('../../lib/subprotocol/jsonRWS');
-const raw = require('../../lib/subprotocol/raw');
-const helper = require('../../lib/helper');
+import eventEmitter from './auxillary/eventEmitter.js';
+import jsonRWS from '../../lib/subprotocol/jsonRWS.js';
+import raw from '../../lib/subprotocol/raw.js';
+import helper from '../../lib/helper.js';
 
 
 class Client13jsonRWS {
@@ -459,12 +459,7 @@ class Client13jsonRWS {
 
 
 
-// NodeJS (browserify)
-if (typeof module !== 'undefined') {
-  module.exports = Client13jsonRWS;
-}
 
-// Browser
-if (typeof window !== 'undefined') {
-  window.regochWebsocket = { Client13jsonRWS };
-}
+export default Client13jsonRWS;
+window.regochWebsocket = { Client13jsonRWS };
+

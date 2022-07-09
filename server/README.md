@@ -23,7 +23,7 @@ Very clean code with straightforward logic and no dependencies.
 
 ## Installation
 ```
-npm install --save regoch-websocket-server
+npm install --save regoch-websocket
 ```
 
 
@@ -43,4 +43,8 @@ $ nodemon examples/001internal.js
 ## TCPDUMP
 Use *tcpdump* command to debug the messages sent from the server to the client.
 For example ```sudo tcpdump -i any port 8000 -X -s0``` where 8000 is the server port.
+
+
+### Licence
+Copyright (c) 2020 Saša Mikodanić licensed under [MIT](../LICENSE) .
 

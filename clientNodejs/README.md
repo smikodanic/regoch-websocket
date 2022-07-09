@@ -8,8 +8,8 @@ Optimised, high speed, reliable and very powerful library made according to [RFC
 npm install --save regoch-websocket
 ```
 
-## Website
-Documentation at [www.regoch.org](http://www.regoch.org/websocket/clients/nodejs)
+## Website Documentation
+[http://www.regoch.org/websocket/clients/nodejs](http://www.regoch.org/websocket/clients/nodejs)
 
 
 ## Websocket Client Features
@@ -23,12 +23,6 @@ Documentation at [www.regoch.org](http://www.regoch.org/websocket/clients/nodejs
 - powerful API which saves your development time
 - easy integration with RxJS
 
-
-## Development
-```bash
-$ cd examples/clientNodejs
-$ nodemon 000dev.js
-```
 
 
 ## API
@@ -66,7 +60,7 @@ $ nodemon 000dev.js
 The 'message-error' event is error in the recived message. In most cases this error is generated when message doesn't satisfy jsonRWS subprotocol rules.
 
 
-## How to use
+## Example
 ```javascript
 const { Client13jsonRWS, lib } = require('regoch-websocket');
 
@@ -105,3 +99,21 @@ const main = async () => {
 
 main();
 ```
+
+
+## Development
+To develop the library:
+```bash
+// start the server
+$ cd examples/server
+$ nodemon 001internal.js
+
+// run the example script
+$ cd examples/clientNodejs
+$ nodemon 001connect.js
+```
+
+
+
+### Licence
+Copyright (c) 2020 Saša Mikodanić licensed under [MIT](../LICENSE) .
