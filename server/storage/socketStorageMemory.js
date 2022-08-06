@@ -308,19 +308,31 @@ class SocketStorageMemory {
     for (const prop of props) {
       const $eq = query[prop].$eq; // {name: {$eq: 'Johnny'}}
       const $ne = query[prop].$ne; // {name: {$ne: 'Johnny'}}
+      const $gt = query[prop].$gt; // {age: {$gt: 22}}
+      const $gte = query[prop].$gte; // {age: {$gte: 22}}
+      const $lt = query[prop].$lt; // {name: {$lt: 22}}
+      const $lte = query[prop].$lte; // {name: {$lte: 22}}
       const $regex = query[prop].$regex; // {name: {$regex: /Joh/i}}
       const $in = query[prop].$in; // {name: {$in: ['John', 'Mark']}}
       const $exists = query[prop].$exists; // {user_id: {$exists: false}}
 
-      if (!!$eq) {
-        tf = tf && socket.extension[prop] === query[prop].$ne;
-      } else if (!!$ne) {
+      if ($eq !== undefined) {
+        tf = tf && socket.extension[prop] === query[prop].$eq;
+      } else if ($ne !== undefined) {
         tf = tf && socket.extension[prop] !== query[prop].$ne;
-      } else if (!!$regex) {
+      } else if ($gt !== undefined) {
+        tf = tf && socket.extension[prop] > query[prop].$gt;
+      } else if ($gte !== undefined) {
+        tf = tf && socket.extension[prop] >= query[prop].$gte;
+      } else if ($lt !== undefined) {
+        tf = tf && socket.extension[prop] < query[prop].$lt;
+      } else if ($lte !== undefined) {
+        tf = tf && socket.extension[prop] <= query[prop].$lte;
+      } else if ($regex !== undefined) {
         tf = tf && $regex.test(socket.extension[prop]);
-      } else if (!!$in) {
+      } else if ($in !== undefined) {
         tf = tf && query[prop].$in.indexOf(socket.extension[prop]) !== -1;
-      } else if (Object.keys(query[prop]).indexOf('$exists') !== -1) {
+      } else if ($exists !== undefined) {
         const extProps = Object.keys(socket.extension);
         if ($exists === true) { tf = tf && extProps.indexOf(prop) !== -1; }
         else if ($exists === false) { tf = tf && extProps.indexOf(prop) === -1; }
